@@ -146,7 +146,53 @@ tbody tr:hover td{background:rgba(255,255,255,0.015)}
   .page{padding:14px}
   .stats-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ─── Theme tokens (light overrides) ─── */
+html[data-theme="light"]{
+  --bg:#f4f7fb;--bg2:#ffffff;--bg3:#eef2f7;
+  --card:#ffffff;--card2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#475569;--dim:#94a3b8;
+}
+html[data-theme="light"] body::before{opacity:0.4}
+/* Hide BN/EN labels via attr */
+html[data-lang="en"] [data-bn]{display:none}
+html[data-lang="bn"] [data-en]{display:none}
+.theme-toggle,.lang-toggle{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  padding:5px 10px;border-radius:7px;cursor:pointer;font-size:0.78rem;
+  font-family:var(--font-m,monospace);transition:all .18s;
+}
+.theme-toggle:hover,.lang-toggle:hover{color:var(--cyan,#00e5ff);border-color:rgba(0,229,255,0.35)}
+
 </style>
+
+<!-- SEO -->
+<meta name="keywords" content="মোবাইল রিপেয়ার, schematic, testpoint, firmware, OXVIN SMARTO, mobile servicing Bangladesh">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="OXVIN SMARTO — মোবাইল রিপেয়ার ডেটাবেস">
+<meta property="og:description" content="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://oxvin-smarto.web.app/">
+<!-- Firebase Storage -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<!-- Chart.js (admin uses; tiny enough to share) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Google Analytics 4 (replace G-XXXXXX with your real ID) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JZWM2R8QYZ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-JZWM2R8QYZ');</script>
+<!-- Theme + Language pre-init (no flash) -->
+<script>
+(function(){
+  try{
+    var t=localStorage.getItem('oxvin_theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    var l=localStorage.getItem('oxvin_lang')||'bn';
+    document.documentElement.setAttribute('data-lang',l);
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body>
 
@@ -182,6 +228,9 @@ tbody tr:hover td{background:rgba(255,255,255,0.015)}
   <button class="sb-btn" data-page="contents"><i class="fas fa-upload"></i> কন্টেন্ট</button>
   <div class="sb-label">ম্যানেজমেন্ট</div>
   <button class="sb-btn" data-page="requests"><i class="fas fa-bell"></i> রিকোয়েস্ট <span id="reqBadge" style="display:none;margin-left:auto;background:var(--red);color:#fff;padding:1px 7px;border-radius:99px;font-size:0.65rem"></span></button>
+  <button class="sb-btn" data-page="bulk"><i class="fas fa-file-import"></i> ব্যাচ ইম্পোর্ট</button>
+  <button class="sb-btn" data-page="storage"><i class="fas fa-image"></i> ইমেজ আপলোড</button>
+  <button class="sb-btn" data-page="logs"><i class="fas fa-history"></i> অ্যাক্টিভিটি লগ</button>
   <div class="sb-label">সিস্টেম</div>
   <button class="sb-btn" data-page="settings"><i class="fas fa-cog"></i> সেটিংস</button>
   <div class="sb-foot">
@@ -195,6 +244,12 @@ tbody tr:hover td{background:rgba(255,255,255,0.015)}
 <div class="topbar">
   <h1 id="topTitle">ড্যাশবোর্ড</h1>
   <div class="topbar-right">
+    <button id="bellBtn" class="btn btn-ghost btn-sm" onclick="showPage_('requests')" title="নতুন রিকোয়েস্ট" style="position:relative">
+      <i class="fas fa-bell"></i>
+      <span id="bellDot" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%"></span>
+    </button>
+    <button id="langBtn" class="lang-toggle" onclick="toggleLang()">EN</button>
+    <button id="themeBtn" class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
     <button class="btn btn-ghost btn-sm" onclick="syncUser()"><i class="fas fa-sync-alt"></i> Sync</button>
   </div>
 </div>
@@ -212,6 +267,79 @@ tbody tr:hover td{background:rgba(255,255,255,0.015)}
     <div class="tw"><table id="dashReqTable">
       <thead><tr><th>মডেল</th><th>টাইপ</th><th>ইউজার</th><th>স্ট্যাটাস</th></tr></thead>
       <tbody></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- DASHBOARD CHART -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-title"><i class="fas fa-chart-line"></i> কন্টেন্ট পরিসংখ্যান</div>
+    <div style="position:relative;height:280px"><canvas id="dashChart"></canvas></div>
+  </div>
+</div>
+
+<!-- BULK IMPORT PAGE -->
+<div id="bulkPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-file-import"></i> ব্যাচ ইম্পোর্ট (JSON / CSV)</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
+      একাধিক মডেল বা কন্টেন্ট একসাথে যোগ করুন। JSON বা CSV ফাইল আপলোড করুন।
+    </p>
+    <div class="fr">
+      <select id="bulkType">
+        <option value="models">মডেল</option>
+        <option value="contents">কন্টেন্ট</option>
+        <option value="brands">ব্র্যান্ড</option>
+      </select>
+      <input type="file" id="bulkFile" accept=".json,.csv">
+      <button class="btn btn-cyan" onclick="doBulkImport()"><i class="fas fa-upload"></i> ইম্পোর্ট</button>
+    </div>
+    <details style="margin-top:14px;font-size:0.82rem;color:var(--muted)">
+      <summary style="cursor:pointer;color:var(--cyan)">📋 JSON ফরম্যাট দেখুন</summary>
+      <pre style="background:var(--bg2);padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto;font-family:var(--font-m);font-size:0.78rem">[
+  {"name":"Galaxy S23","specs":"SM-S911B","brandId":"samsung","order":1},
+  {"name":"Galaxy S24","specs":"SM-S921B","brandId":"samsung","order":2}
+]
+CSV: name,specs,brandId,order</pre>
+    </details>
+    <div id="bulkResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- IMAGE UPLOAD PAGE -->
+<div id="storagePage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-image"></i> ইমেজ আপলোড (Firebase Storage)</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
+      ব্র্যান্ড লোগো, স্কিমেটিক্স ছবি বা যেকোনো ইমেজ আপলোড করুন। আপলোড হলে URL পাবেন।
+    </p>
+    <div class="fr">
+      <input type="file" id="imgFile" accept="image/*">
+      <input type="text" id="imgFolder" placeholder="ফোল্ডার (logos / schematics)" value="uploads">
+      <button class="btn btn-cyan" onclick="doImgUpload()"><i class="fas fa-cloud-upload-alt"></i> আপলোড</button>
+    </div>
+    <div id="imgResult" style="margin-top:14px"></div>
+    <div class="tw" style="margin-top:14px"><table id="imgTable">
+      <thead><tr><th>প্রিভিউ</th><th>নাম</th><th>URL</th><th>অ্যাকশন</th></tr></thead>
+      <tbody><tr><td colspan="4" class="empty-row">এখনো ইমেজ আপলোড হয়নি</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ACTIVITY LOGS PAGE -->
+<div id="logsPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-history"></i> অ্যাক্টিভিটি লগ</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
+      কে কখন কী এডিট/যোগ/মুছেছে — সব এখানে দেখা যাবে।
+    </p>
+    <div class="fr" style="margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="loadLogs()"><i class="fas fa-sync"></i> রিফ্রেশ</button>
+      <button class="btn btn-red btn-sm" onclick="clearLogs()" style="margin-left:auto"><i class="fas fa-trash"></i> পুরোনো লগ মুছুন</button>
+    </div>
+    <div class="tw"><table id="logsTable">
+      <thead><tr><th>সময়</th><th>ইউজার</th><th>অ্যাকশন</th><th>আইটেম</th></tr></thead>
+      <tbody><tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -367,7 +495,8 @@ const FC={
   appId:"1:607560575581:web:abf88c2b09d6ee56ddfbb4",
   measurementId:"G-JZWM2R8QYZ"
 };
-const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests'};
+const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests',logs:'oxvin_logs',images:'oxvin_images'};
+let storage;
 const MASTER_UID='ncsMmnyh6Kaf0liUs9XDJnxuMac2';
 const MASTER_EMAIL='serfwerf59@gmail.com';
 
@@ -382,8 +511,8 @@ let db,auth,fbReady=false,currentAdmin=null,allBrands=[],allModels=[],allContent
     clearInterval(iv);
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
-      db=firebase.firestore();auth=firebase.auth();
-      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db=firebase.firestore();auth=firebase.auth();try{storage=firebase.storage()}catch(e){console.warn("Storage not enabled:",e.message)}
+      db.settings({experimentalForceLongPolling:true,ignoreUndefinedProperties:true,merge:true});
       fbReady=true;
       auth.onAuthStateChanged(function(user){user?checkAccess(user):showLogin()});
     }catch(e){console.error('[OXVIN Admin]',e.message)}
@@ -741,6 +870,222 @@ document.querySelectorAll('.sb-btn[data-page]').forEach(btn=>{
 });
 
 document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+
+
+// ══════════════════════════════════════════
+// THEME + LANG TOGGLE
+// ══════════════════════════════════════════
+
+window.toggleTheme=function(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var nxt=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',nxt);
+  try{localStorage.setItem('oxvin_theme',nxt)}catch(e){}
+  var b=document.getElementById('themeBtn');if(b)b.textContent=nxt==='dark'?'☀️ Light':'🌙 Dark';
+};
+window.toggleLang=function(){
+  var cur=document.documentElement.getAttribute('data-lang')||'bn';
+  var nxt=cur==='bn'?'en':'bn';
+  document.documentElement.setAttribute('data-lang',nxt);
+  try{localStorage.setItem('oxvin_lang',nxt)}catch(e){}
+  var b=document.getElementById('langBtn');if(b)b.textContent=nxt==='bn'?'EN':'বাং';
+};
+document.addEventListener('DOMContentLoaded',function(){
+  var t=document.getElementById('themeBtn');
+  if(t)t.textContent=(document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'☀️ Light':'🌙 Dark';
+  var l=document.getElementById('langBtn');
+  if(l)l.textContent=(document.documentElement.getAttribute('data-lang')||'bn')==='bn'?'EN':'বাং';
+});
+
+
+// ══════════════════════════════════════════
+// ACTIVITY LOG HELPER
+// ══════════════════════════════════════════
+async function logAct(action,item){
+  if(!db||!currentAdmin)return;
+  try{
+    await db.collection(FS.logs).add({
+      action,item:item||'',
+      uid:currentAdmin.uid,email:currentAdmin.email,name:currentAdmin.name,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){}
+}
+async function loadLogs(){
+  try{
+    var snap=await db.collection(FS.logs).orderBy('createdAt','desc').limit(100).get();
+    document.querySelector('#logsTable tbody').innerHTML=snap.empty
+      ?'<tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr>'
+      :snap.docs.map(d=>{var l=d.data();var t=l.createdAt&&l.createdAt.toDate?l.createdAt.toDate().toLocaleString('bn-BD'):'—';return`<tr><td style="font-size:0.76rem;color:var(--muted);font-family:var(--font-m)">${t}</td><td style="font-size:0.82rem">${l.name||l.email||'?'}</td><td><span class="badge b-pending">${l.action}</span></td><td style="font-size:0.82rem;color:var(--muted)">${l.item||'—'}</td></tr>`}).join('');
+  }catch(e){toast('লগ লোড ব্যর্থ','err')}
+}
+async function clearLogs(){
+  if(!confirm('৭ দিনের পুরোনো সব লগ মুছবেন?'))return;
+  try{
+    var cutoff=new Date(Date.now()-7*24*3600*1000);
+    var snap=await db.collection(FS.logs).where('createdAt','<',cutoff).get();
+    var batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();
+    toast(snap.size+' টি লগ মুছে গেছে','ok');loadLogs();
+  }catch(e){toast('মুছতে ব্যর্থ','err')}
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD CHART
+// ══════════════════════════════════════════
+let dashChartInst=null;
+async function renderDashChart(){
+  var canvas=document.getElementById('dashChart');
+  if(!canvas||typeof Chart==='undefined')return;
+  try{
+    var snap=await db.collection(FS.contents).get();
+    var cnt={schematic:0,testpoint:0,firmware:0,code:0};
+    snap.docs.forEach(d=>{var t=d.data().type;if(cnt[t]!==undefined)cnt[t]++});
+    if(dashChartInst)dashChartInst.destroy();
+    dashChartInst=new Chart(canvas.getContext('2d'),{
+      type:'doughnut',
+      data:{labels:['স্কিমেটিক্স','টেস্টপয়েন্ট','ফার্মওয়্যার','কোড'],
+        datasets:[{data:[cnt.schematic,cnt.testpoint,cnt.firmware,cnt.code],
+          backgroundColor:['#00e5ff','#f59e0b','#10b981','#8b5cf6'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{color:getComputedStyle(document.body).color}}}}
+    });
+  }catch(e){console.warn('chart err',e.message)}
+}
+
+// ══════════════════════════════════════════
+// NOTIFICATION BELL — listen for new pending requests
+// ══════════════════════════════════════════
+function startBellWatcher(){
+  if(!db)return;
+  try{
+    db.collection(FS.requests).where('status','==','pending').onSnapshot(snap=>{
+      var b=document.getElementById('bellDot');
+      var rb=document.getElementById('reqBadge');
+      if(snap.size>0){if(b)b.style.display='block';if(rb){rb.textContent=snap.size;rb.style.display='inline'}}
+      else{if(b)b.style.display='none';if(rb)rb.style.display='none'}
+    });
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// BULK IMPORT
+// ══════════════════════════════════════════
+async function doBulkImport(){
+  var f=document.getElementById('bulkFile').files[0];
+  var type=document.getElementById('bulkType').value;
+  var resEl=document.getElementById('bulkResult');
+  if(!f){toast('ফাইল বাছুন','err');return}
+  resEl.innerHTML='<div style="color:var(--muted);font-size:0.83rem">পার্সিং...</div>';
+  try{
+    var text=await f.text();var rows=[];
+    if(f.name.endsWith('.json')){rows=JSON.parse(text);if(!Array.isArray(rows))throw new Error('JSON অ্যারে হতে হবে')}
+    else{var lines=text.trim().split(/\r?\n/);var hdr=lines[0].split(',').map(s=>s.trim());
+      rows=lines.slice(1).map(ln=>{var v=ln.split(',');var o={};hdr.forEach((h,i)=>o[h]=(v[i]||'').trim());return o})}
+    var col=FS[type];if(!col)throw new Error('অজানা টাইপ');
+    var ok=0,fail=0;
+    for(var i=0;i<rows.length;i++){
+      try{
+        var r=rows[i];
+        if(type==='brands'||type==='models'){r.order=parseInt(r.order)||99}
+        if(type==='contents'){r.downloadCount=parseInt(r.downloadCount)||0}
+        r.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+        if(r.id){var id=r.id;delete r.id;await db.collection(col).doc(id).set(r)}
+        else await db.collection(col).add(r);
+        ok++;
+      }catch(e){fail++}
+    }
+    resEl.innerHTML='<div style="padding:10px;background:rgba(16,185,129,0.1);border-radius:7px;color:var(--green)">✅ '+ok+' টি সফল, ❌ '+fail+' টি ব্যর্থ</div>';
+    toast(ok+' টি ইম্পোর্ট হয়েছে','ok');
+    logAct('bulk_import',type+' ('+ok+' items)');
+    syncUser();
+  }catch(e){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ '+e.message+'</div>'}
+}
+
+// ══════════════════════════════════════════
+// IMAGE UPLOAD (Firebase Storage)
+// ══════════════════════════════════════════
+async function doImgUpload(){
+  var f=document.getElementById('imgFile').files[0];
+  var folder=(document.getElementById('imgFolder').value.trim()||'uploads').replace(/[^a-z0-9_\-]/gi,'_');
+  var resEl=document.getElementById('imgResult');
+  if(!f){toast('ইমেজ বাছুন','err');return}
+  if(!storage){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ Firebase Storage enable করতে হবে। Firebase Console → Storage → Get Started।</div>';return}
+  resEl.innerHTML='<div style="color:var(--muted);font-size:0.83rem">আপলোড হচ্ছে...</div>';
+  try{
+    var path=folder+'/'+Date.now()+'_'+f.name.replace(/\s+/g,'_');
+    var ref=storage.ref().child(path);
+    var snap=await ref.put(f);
+    var url=await snap.ref.getDownloadURL();
+    await db.collection(FS.images).add({path,url,name:f.name,size:f.size,createdAt:firebase.firestore.FieldValue.serverTimestamp(),uploadedBy:currentAdmin?.uid||''});
+    resEl.innerHTML='<div style="padding:12px;background:var(--card2);border-radius:8px"><img src="'+url+'" style="max-height:80px;border-radius:6px;margin-bottom:8px"><br><input value="'+url+'" readonly style="width:100%;padding:7px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.78rem" onclick="this.select()"></div>';
+    toast('আপলোড সফল! URL কপি করুন','ok');
+    logAct('upload_image',f.name);loadImgTable();
+  }catch(e){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ '+e.message+'</div>'}
+}
+async function loadImgTable(){
+  if(!db)return;
+  try{
+    var snap=await db.collection(FS.images).orderBy('createdAt','desc').limit(50).get();
+    document.querySelector('#imgTable tbody').innerHTML=snap.empty
+      ?'<tr><td colspan="4" class="empty-row">এখনো ইমেজ আপলোড হয়নি</td></tr>'
+      :snap.docs.map(d=>{var i=d.data();return`<tr><td><img src="${i.url}" style="height:38px;border-radius:5px"></td><td style="font-size:0.82rem">${i.name||'—'}</td><td><input value="${i.url}" readonly style="width:100%;max-width:280px;padding:5px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.72rem" onclick="this.select()"></td><td><button class="btn btn-red btn-sm" onclick="delImg('${d.id}','${i.path||''}')"><i class="fas fa-trash"></i></button></td></tr>`}).join('');
+  }catch(e){}
+}
+async function delImg(id,path){
+  if(!confirm('ইমেজ মুছবেন?'))return;
+  try{
+    if(path&&storage){try{await storage.ref().child(path).delete()}catch(e){}}
+    await db.collection(FS.images).doc(id).delete();
+    toast('মুছে গেছে','ok');logAct('delete_image',path);loadImgTable();
+  }catch(e){toast('মুছতে ব্যর্থ','err')}
+}
+
+// ══════════════════════════════════════════
+// HOOK INTO PAGE NAVIGATION (extend existing pageLoaders)
+// ══════════════════════════════════════════
+if(typeof pageLoaders==='object'){
+  pageLoaders.bulk=()=>{};
+  pageLoaders.storage=()=>loadImgTable();
+  pageLoaders.logs=()=>loadLogs();
+  var _origDash=pageLoaders.dashboard;
+  pageLoaders.dashboard=function(){_origDash&&_origDash();renderDashChart()};
+}
+if(typeof pageTitles==='object'){
+  pageTitles.bulk='ব্যাচ ইম্পোর্ট';pageTitles.storage='ইমেজ আপলোড';pageTitles.logs='অ্যাক্টিভিটি লগ';
+}
+
+// Re-bind newly-added sidebar buttons (the original loop ran before our HTML was injected? No, HTML was injected at parse time, so original loop covers them. But ensure):
+document.querySelectorAll('.sb-btn[data-page]').forEach(btn=>{
+  if(btn._oxBound)return;btn._oxBound=true;
+  btn.addEventListener('click',function(){
+    var p=this.dataset.page;
+    document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    var pg=document.getElementById(p+'Page');if(pg)pg.classList.add('active');
+    var tt=document.getElementById('topTitle');if(tt)tt.textContent=pageTitles[p]||p;
+    if(pageLoaders[p])pageLoaders[p]();
+  });
+});
+
+// shortcut for bell click → switch to requests page
+function showPage_(p){var btn=document.querySelector('.sb-btn[data-page="'+p+'"]');if(btn)btn.click()}
+
+// Wrap mutation functions to log
+['addBrand','deleteBrand','addModel','deleteModel','addContent','saveEdit','delContent','updateReq','delReq'].forEach(fn=>{
+  if(typeof window[fn]==='function'){
+    var orig=window[fn];
+    window[fn]=async function(){
+      try{await orig.apply(this,arguments);logAct(fn,Array.from(arguments).join(' / '))}
+      catch(e){throw e}
+    };
+  }
+});
+
+// Start bell watcher when admin loaded
+var _origCheck=window.checkAccess;
+window.checkAccess=async function(u){await _origCheck(u);startBellWatcher();renderDashChart()};
 
 // ══════════════════════════════════════════
 // TOAST
