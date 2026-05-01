@@ -3,31 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OXVIN SMARTO — Admin Panel</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta name="referrer" content="no-referrer-when-downgrade">
+<title>OXVIN SMARTO — Admin Panel v2</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tiro+Bangla&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JZWM2R8QYZ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-JZWM2R8QYZ');</script>
+<script>(function(){try{var t=localStorage.getItem('oxvin_theme')||'dark';document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('oxvin_lang')||'bn';document.documentElement.setAttribute('data-lang',l);}catch(e){}})()</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#06080f;--bg2:#0a0d18;--bg3:#0d1120;--card:#101522;--card2:#141a28;
   --border:#1a2236;--border2:#1e2840;
   --cyan:#00e5ff;--cyan2:#00b8d4;--cyan3:rgba(0,229,255,0.08);
-  --green:#10b981;--red:#f43f5e;--amber:#f59e0b;--purple:#8b5cf6;
+  --green:#10b981;--red:#f43f5e;--amber:#f59e0b;--purple:#8b5cf6;--orange:#f97316;
   --text:#e2eeff;--muted:#6b8aad;--dim:#384d66;
   --font-d:'Bebas Neue',cursive;--font-b:'Tiro Bangla',serif;--font-m:'JetBrains Mono',monospace;
+  --sidebar-w:230px;
 }
+html[data-theme="light"]{
+  --bg:#f0f4fb;--bg2:#ffffff;--bg3:#eef2f7;
+  --card:#ffffff;--card2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#475569;--dim:#94a3b8;
+  --cyan3:rgba(0,180,220,0.08);
+}
+html[data-lang="en"] [data-bn]{display:none!important}
+html[data-lang="bn"] [data-en]{display:none!important}
 body{background:var(--bg);color:var(--text);font-family:var(--font-b);line-height:1.6;overflow-x:hidden}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
 /* ─── LOGIN ─── */
-#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,229,255,0.05) 0%,transparent 60%)}
-.login-box{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:36px 32px}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,229,255,0.06) 0%,transparent 60%)}
+.login-box{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:36px 32px;box-shadow:0 24px 64px rgba(0,0,0,0.4)}
 .login-logo{text-align:center;margin-bottom:28px}
 .login-logo .brand{font-family:var(--font-d);font-size:2rem;letter-spacing:4px;color:var(--cyan)}
 .login-logo .sub{font-size:0.65rem;letter-spacing:4px;color:var(--muted);font-family:var(--font-m)}
@@ -46,71 +59,73 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);line-heigh
 
 /* ─── SIDEBAR ─── */
 .sidebar{
-  width:220px;background:var(--bg2);border-right:1px solid var(--border);
+  width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);
   padding:16px 10px;position:fixed;height:100vh;overflow-y:auto;
-  display:flex;flex-direction:column;z-index:100;
+  display:flex;flex-direction:column;z-index:100;transition:transform .3s;
 }
+.sidebar.collapsed{transform:translateX(-100%)}
 .sb-logo{padding:4px 8px 16px;border-bottom:1px solid var(--border);margin-bottom:14px}
 .sb-logo .brand{font-family:var(--font-d);font-size:1.2rem;letter-spacing:2px;color:var(--cyan)}
 .sb-logo .sub{font-size:0.6rem;letter-spacing:2px;color:var(--dim);font-family:var(--font-m)}
+.sb-logo .v-badge{font-size:0.58rem;background:var(--cyan3);color:var(--cyan);border:1px solid rgba(0,229,255,0.2);border-radius:99px;padding:1px 6px;font-family:var(--font-m);margin-left:6px}
 .sb-label{font-size:0.62rem;letter-spacing:2px;color:var(--dim);font-family:var(--font-m);padding:0 8px;margin:14px 0 5px}
-.sb-btn{
-  display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;
-  background:transparent;border:none;color:var(--muted);font-family:var(--font-b);font-size:0.88rem;
-  text-align:left;cursor:pointer;width:100%;transition:all .18s;
-}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;background:transparent;border:none;color:var(--muted);font-family:var(--font-b);font-size:0.88rem;text-align:left;cursor:pointer;width:100%;transition:all .18s;position:relative}
 .sb-btn i{width:16px;text-align:center;font-size:0.82rem}
 .sb-btn:hover{background:rgba(255,255,255,0.04);color:var(--text)}
 .sb-btn.active{background:var(--cyan3);color:var(--cyan)}
-.sb-btn.danger{color:var(--red)}
-.sb-btn.danger:hover{background:rgba(244,63,94,0.06)}
+.sb-btn.danger{color:var(--red)}.sb-btn.danger:hover{background:rgba(244,63,94,0.06)}
 .sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
 .sb-user{padding:6px 10px;font-size:0.75rem;color:var(--dim);font-family:var(--font-m)}
 .sb-user strong{color:var(--muted);display:block;font-size:0.8rem}
+.sb-badge{display:inline-block;background:var(--red);color:#fff;padding:1px 7px;border-radius:99px;font-size:0.62rem;font-family:var(--font-m);margin-left:auto}
+.sb-badge.hidden{display:none}
 
 /* ─── MAIN ─── */
-.main{margin-left:220px;flex:1;min-height:100vh}
-.topbar{
-  background:rgba(6,8,15,0.92);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);padding:0 22px;height:54px;
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:50;
-}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;transition:margin-left .3s}
+.main.expanded{margin-left:0}
+.topbar{background:rgba(6,8,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 22px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+html[data-theme="light"] .topbar{background:rgba(240,244,251,0.92)}
 .topbar h1{font-family:var(--font-d);font-size:1.1rem;letter-spacing:1px}
-.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.topbar-left{display:flex;align-items:center;gap:10px}
 
 /* ─── PAGES ─── */
-.page{display:none;padding:20px}
+.page{display:none;padding:20px;animation:fadeIn .2s ease}
 .page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* ─── STATS GRID ─── */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
-.sc-label{font-size:0.7rem;color:var(--muted);font-family:var(--font-m);letter-spacing:0.5px;margin-bottom:6px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;inset:0;opacity:0;background:linear-gradient(135deg,var(--c1,var(--cyan)) 0%,transparent 60%);transition:opacity .3s;border-radius:12px}
+.stat-card:hover{border-color:var(--c1,var(--cyan));transform:translateY(-2px)}
+.stat-card:hover::before{opacity:0.05}
+.sc-label{font-size:0.7rem;color:var(--muted);font-family:var(--font-m);letter-spacing:0.5px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
 .sc-val{font-family:var(--font-m);font-size:1.6rem;font-weight:700}
-.sc-val.c{color:var(--cyan)}.sc-val.g{color:var(--green)}.sc-val.a{color:var(--amber)}.sc-val.r{color:var(--red)}
+.sc-icon{font-size:1.1rem;opacity:0.5}
+.sc-val.c{color:var(--cyan)}.sc-val.g{color:var(--green)}.sc-val.a{color:var(--amber)}.sc-val.r{color:var(--red)}.sc-val.p{color:var(--purple)}
 
 /* ─── CARD ─── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px}
 .card-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:1px;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title .ct-sub{font-family:var(--font-b);font-size:0.75rem;color:var(--muted);letter-spacing:0;margin-left:auto;font-weight:normal}
 
 /* ─── FORM ROW ─── */
 .fr{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end}
-.fr input,.fr select,.fr textarea{
-  flex:1;min-width:130px;padding:9px 12px;border-radius:7px;
-  border:1px solid var(--border2);background:var(--bg2);color:var(--text);
-  font-family:var(--font-b);font-size:0.86rem;outline:none;transition:border-color .2s;
-}
+.fr input,.fr select,.fr textarea{flex:1;min-width:130px;padding:9px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-b);font-size:0.86rem;outline:none;transition:border-color .2s}
 .fr input:focus,.fr select:focus,.fr textarea:focus{border-color:rgba(0,229,255,0.35)}
 .fr textarea{resize:none;min-height:70px}
 
 /* ─── BUTTONS ─── */
 .btn{padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-family:var(--font-b);font-size:0.84rem;transition:all .18s;display:inline-flex;align-items:center;gap:5px}
-.btn-cyan{background:var(--cyan);color:#06080f}.btn-cyan:hover{background:var(--cyan2)}
-.btn-green{background:var(--green);color:#06080f}.btn-green:hover{filter:brightness(1.1)}
-.btn-red{background:rgba(244,63,94,0.1);color:var(--red);border:1px solid rgba(244,63,94,0.2)}.btn-red:hover{background:rgba(244,63,94,0.18)}
-.btn-ghost{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text);background:rgba(255,255,255,0.08)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-cyan{background:var(--cyan);color:#06080f}.btn-cyan:hover:not(:disabled){background:var(--cyan2)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover:not(:disabled){filter:brightness(1.1)}
+.btn-red{background:rgba(244,63,94,0.1);color:var(--red);border:1px solid rgba(244,63,94,0.2)}.btn-red:hover:not(:disabled){background:rgba(244,63,94,0.18)}
+.btn-amber{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}.btn-amber:hover:not(:disabled){background:rgba(245,158,11,0.18)}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border2)}.btn-ghost:hover:not(:disabled){color:var(--text);background:rgba(255,255,255,0.08)}
 .btn-sm{padding:5px 10px;font-size:0.77rem}
+.btn-xs{padding:3px 8px;font-size:0.72rem}
 
 /* ─── TABLE ─── */
 .tw{overflow-x:auto}
@@ -123,103 +138,93 @@ tbody tr:hover td{background:rgba(255,255,255,0.015)}
 .b-pending{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}
 .b-approved{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
 .b-rejected{background:rgba(244,63,94,0.1);color:var(--red);border:1px solid rgba(244,63,94,0.2)}
-.empty-row{text-align:center;padding:30px;color:var(--dim);font-size:0.83rem}
+.b-info{background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid rgba(0,229,255,0.2)}
+.empty-row{text-align:center;padding:40px;color:var(--dim);font-size:0.83rem}
 
 /* ─── MODAL ─── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-bg.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
-.modal-title{font-family:var(--font-d);font-size:1.05rem;letter-spacing:1px;margin-bottom:16px}
+.modal-bg.show{display:flex;animation:fadeIn .2s ease}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:1.05rem;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .mf{margin-bottom:12px}
 .mf label{display:block;font-size:0.7rem;color:var(--muted);font-family:var(--font-m);letter-spacing:0.5px;margin-bottom:4px}
 .mf input,.mf select,.mf textarea{width:100%;padding:9px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-b);font-size:0.86rem;outline:none;transition:border-color .2s}
 .mf input:focus,.mf select:focus,.mf textarea:focus{border-color:rgba(0,229,255,0.35)}
 .mf textarea{resize:vertical;min-height:80px}
-.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* ─── CONFIRM MODAL ─── */
+.confirm-modal{max-width:380px}
+.confirm-icon{font-size:2.5rem;text-align:center;margin-bottom:12px}
+.confirm-msg{text-align:center;color:var(--muted);font-size:0.9rem;margin-bottom:4px}
+.confirm-item{text-align:center;font-weight:600;color:var(--text);margin-bottom:16px}
 
 /* ─── TOAST ─── */
 .toast-wrap{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.toast{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:10px 15px;font-size:0.83rem;display:flex;align-items:center;gap:7px;box-shadow:0 6px 20px rgba(0,0,0,0.4);animation:tin .3s ease;max-width:300px}
-.toast.ok{border-left:3px solid var(--green)}.toast.err{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--cyan)}
+.toast{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:10px 15px;font-size:0.83rem;display:flex;align-items:center;gap:7px;box-shadow:0 6px 20px rgba(0,0,0,0.4);animation:tin .3s ease;max-width:320px}
+.toast.ok{border-left:3px solid var(--green)}.toast.err{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--cyan)}.toast.warn{border-left:3px solid var(--amber)}
 @keyframes tin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
 
-@media(max-width:700px){
-  .sidebar{display:none}
+/* ─── PROGRESS BAR ─── */
+.prog-bar{height:5px;background:var(--border2);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:var(--cyan);border-radius:3px;transition:width .3s}
+
+/* ─── SEARCH BAR ─── */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:9px 12px 9px 36px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-b);font-size:0.86rem;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:rgba(0,229,255,0.35)}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:0.82rem}
+
+/* ─── TOGGLE ─── */
+.toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggle{width:36px;height:20px;background:var(--border2);border-radius:99px;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--cyan)}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:19px}
+
+/* ─── ADS PREVIEW ─── */
+.ad-preview{background:var(--bg2);border:1px dashed var(--border2);border-radius:8px;padding:20px;text-align:center;color:var(--dim);font-size:0.8rem;font-family:var(--font-m)}
+
+/* ─── USER TABLE ─── */
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--cyan3);border:1px solid rgba(0,229,255,0.2);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--cyan);font-family:var(--font-m);flex-shrink:0}
+
+/* ─── THEME/LANG toggle ─── */
+.theme-toggle,.lang-toggle{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:5px 10px;border-radius:7px;cursor:pointer;font-size:0.78rem;font-family:var(--font-m,monospace);transition:all .18s}
+.theme-toggle:hover,.lang-toggle:hover{color:var(--cyan,#00e5ff);border-color:rgba(0,229,255,0.35)}
+
+/* ─── GRID CHARTS ─── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.chart-box-title{font-family:var(--font-d);font-size:0.85rem;letter-spacing:1px;color:var(--cyan);margin-bottom:12px}
+
+/* ─── NOTIFICATION BANNER ─── */
+.notif-banner{background:linear-gradient(90deg,rgba(0,229,255,0.08),rgba(139,92,246,0.08));border:1px solid rgba(0,229,255,0.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:0.85rem}
+.notif-banner i{color:var(--cyan);font-size:1rem}
+
+/* ─── MOBILE ─── */
+.mob-menu-btn{display:none;background:transparent;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px}
+@media(max-width:768px){
+  .sidebar{display:block}
+  .sidebar:not(.show){transform:translateX(-100%)}
   .main{margin-left:0}
   .page{padding:14px}
   .stats-grid{grid-template-columns:1fr 1fr}
+  .chart-grid{grid-template-columns:1fr}
+  .mob-menu-btn{display:block}
+  .topbar{padding:0 14px}
+  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;display:none}
+  .sidebar-overlay.show{display:block}
 }
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr}}
 
-/* ─── Theme tokens (light overrides) ─── */
-html[data-theme="light"]{
-  --bg:#f4f7fb;--bg2:#ffffff;--bg3:#eef2f7;
-  --card:#ffffff;--card2:#f8fafc;
-  --border:#e2e8f0;--border2:#cbd5e1;
-  --text:#0f172a;--muted:#475569;--dim:#94a3b8;
-}
-html[data-theme="light"] body::before{opacity:0.4}
-/* Hide BN/EN labels via attr */
-html[data-lang="en"] [data-bn]{display:none}
-html[data-lang="bn"] [data-en]{display:none}
-.theme-toggle,.lang-toggle{
-  background:transparent;border:1px solid var(--border2);color:var(--muted);
-  padding:5px 10px;border-radius:7px;cursor:pointer;font-size:0.78rem;
-  font-family:var(--font-m,monospace);transition:all .18s;
-}
-.theme-toggle:hover,.lang-toggle:hover{color:var(--cyan,#00e5ff);border-color:rgba(0,229,255,0.35)}
+/* ─── RESTORE SECTION ─── */
+.restore-drop{border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;color:var(--dim);font-size:0.85rem}
+.restore-drop:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan3)}
+.restore-drop.drag-over{border-color:var(--green);background:rgba(16,185,129,0.05)}
 
-
-/* ── Added by upgrade pack ── */
-[data-tooltip]{position:relative}
-[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-family:var(--font-m,monospace);white-space:nowrap;z-index:9999;pointer-events:none}
-.skeleton{background:linear-gradient(90deg,var(--card,#101522) 0%,var(--card2,#141a28) 50%,var(--card,#101522) 100%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
-@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
-#scrollTopBtn{position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cyan,#00e5ff);color:#000;border:none;font-size:20px;cursor:pointer;display:none;z-index:999;box-shadow:0 6px 20px rgba(0,229,255,.3);transition:transform .2s}
-#scrollTopBtn:hover{transform:translateY(-3px)}
-.confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:99999;animation:fadeIn .2s}
-.confirm-modal{background:var(--card,#101522);border:1px solid var(--border2,#1e2840);border-radius:14px;padding:24px;max-width:380px;width:90%;text-align:center}
-.confirm-modal h3{font-family:var(--font-d,sans-serif);font-size:1.3rem;letter-spacing:2px;color:var(--cyan,#00e5ff);margin-bottom:10px}
-.confirm-modal p{color:var(--text,#e2eeff);margin-bottom:20px;font-size:.95rem}
-.confirm-modal .row{display:flex;gap:10px;justify-content:center}
-.confirm-modal button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font-m,monospace);font-size:.85rem;letter-spacing:1px}
-.confirm-modal .ok{background:var(--red,#f43f5e);color:#fff}
-.confirm-modal .no{background:var(--card2,#141a28);color:var(--text,#e2eeff);border:1px solid var(--border2,#1e2840)}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-html[data-theme="light"] .ci-icon,html[data-theme="light"] img.ci-icon{filter:brightness(.95)}
-html[data-theme="dark"] .ci-icon,html[data-theme="dark"] img.ci-icon{filter:brightness(1.1)}
-img[loading]{transition:opacity .3s}
-.bulk-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--cyan3,rgba(0,229,255,.08));border:1px solid rgba(0,229,255,.2);border-radius:8px;margin-bottom:10px;font-size:.85rem;font-family:var(--font-m,monospace)}
-.bulk-bar .count{color:var(--cyan,#00e5ff);font-weight:700}
-.bulk-bar button{padding:6px 14px;border:none;border-radius:6px;background:var(--red,#f43f5e);color:#fff;cursor:pointer;font-size:.8rem;font-family:var(--font-m,monospace)}
-.bulk-bar button:disabled{opacity:.4;cursor:not-allowed}
+/* ─── INLINE EDIT ─── */
+.editable-td:hover{background:rgba(0,229,255,0.04)!important;cursor:pointer}
 </style>
-
-<!-- SEO -->
-<meta name="keywords" content="মোবাইল রিপেয়ার, schematic, testpoint, firmware, OXVIN SMARTO, mobile servicing Bangladesh">
-<meta name="robots" content="index,follow">
-<meta property="og:title" content="OXVIN SMARTO — মোবাইল রিপেয়ার ডেটাবেস">
-<meta property="og:description" content="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস">
-<meta property="og:type" content="website">
-<link rel="canonical" href="https://oxvin-smarto.web.app/">
-<!-- Firebase Storage -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-<!-- Chart.js (admin uses; tiny enough to share) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- Google Analytics 4 (replace G-XXXXXX with your real ID) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-JZWM2R8QYZ"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-JZWM2R8QYZ');</script>
-<!-- Theme + Language pre-init (no flash) -->
-<script>
-(function(){
-  try{
-    var t=localStorage.getItem('oxvin_theme')||'dark';
-    document.documentElement.setAttribute('data-theme',t);
-    var l=localStorage.getItem('oxvin_lang')||'bn';
-    document.documentElement.setAttribute('data-lang',l);
-  }catch(e){}
-})();
-</script>
-
 </head>
 <body>
 
@@ -229,144 +234,127 @@ img[loading]{transition:opacity .3s}
     <div class="login-logo">
       <div class="brand">OXVIN</div>
       <div class="sub">SMARTO PLATFORM</div>
-      <div class="badge">ADMIN PANEL</div>
+      <div class="badge">ADMIN PANEL v2</div>
     </div>
-    <div class="lf"><label>EMAIL</label><input type="email" id="lEmail" placeholder="admin@oxvin.com" autocomplete="email"></div>
-    <div class="lf"><label>PASSWORD</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn-login" onclick="doLogin()" id="loginBtn"><i class="fas fa-sign-in-alt"></i> লগইন</button>
+    <div class="lf"><label data-bn>ইমেইল</label><label data-en style="display:none">EMAIL</label><input type="email" id="lEmail" placeholder="admin@oxvin.com" autocomplete="email"></div>
+    <div class="lf"><label data-bn>পাসওয়ার্ড</label><label data-en style="display:none">PASSWORD</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()" id="loginBtn"><i class="fas fa-sign-in-alt"></i> <span data-bn>লগইন</span><span data-en style="display:none">Login</span></button>
     <div id="loginErr"></div>
   </div>
 </div>
 
 <!-- ═══ ADMIN APP ═══ -->
 <div id="adminApp">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div class="layout">
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebarEl">
   <div class="sb-logo">
-    <div class="brand">OXVIN</div>
+    <div class="brand">OXVIN <span class="v-badge">v2</span></div>
     <div class="sub">ADMIN PANEL</div>
   </div>
-  <div class="sb-label">ডেটা ম্যানেজ</div>
-  <button class="sb-btn active" data-page="dashboard"><i class="fas fa-chart-bar"></i> ড্যাশবোর্ড</button>
-  <button class="sb-btn" data-page="brands"><i class="fas fa-tag"></i> ব্র্যান্ড</button>
-  <button class="sb-btn" data-page="models"><i class="fas fa-mobile-alt"></i> মডেল</button>
-  <button class="sb-btn" data-page="contents"><i class="fas fa-upload"></i> কন্টেন্ট</button>
-  <div class="sb-label">ম্যানেজমেন্ট</div>
-  <button class="sb-btn" data-page="requests"><i class="fas fa-bell"></i> রিকোয়েস্ট <span id="reqBadge" style="display:none;margin-left:auto;background:var(--red);color:#fff;padding:1px 7px;border-radius:99px;font-size:0.65rem"></span></button>
-  <button class="sb-btn" data-page="bulk"><i class="fas fa-file-import"></i> ব্যাচ ইম্পোর্ট</button>
-  <button class="sb-btn" data-page="storage"><i class="fas fa-image"></i> ইমেজ আপলোড</button>
-  <button class="sb-btn" data-page="logs"><i class="fas fa-history"></i> অ্যাক্টিভিটি লগ</button>
-  <div class="sb-label">সিস্টেম</div>
-  <button class="sb-btn" data-page="settings"><i class="fas fa-cog"></i> সেটিংস</button>
+  <div class="sb-label" data-bn>ড্যাশবোর্ড</div>
+  <button class="sb-btn active" data-page="dashboard"><i class="fas fa-chart-bar"></i> <span data-bn>ড্যাশবোর্ড</span><span data-en style="display:none">Dashboard</span></button>
+  <div class="sb-label" data-bn>ডেটা ম্যানেজ</div>
+  <button class="sb-btn" data-page="brands"><i class="fas fa-tag"></i> <span data-bn>ব্র্যান্ড</span><span data-en style="display:none">Brands</span></button>
+  <button class="sb-btn" data-page="models"><i class="fas fa-mobile-alt"></i> <span data-bn>মডেল</span><span data-en style="display:none">Models</span></button>
+  <button class="sb-btn" data-page="contents"><i class="fas fa-upload"></i> <span data-bn>কন্টেন্ট</span><span data-en style="display:none">Contents</span></button>
+  <div class="sb-label" data-bn>ম্যানেজমেন্ট</div>
+  <button class="sb-btn" data-page="requests"><i class="fas fa-bell"></i> <span data-bn>রিকোয়েস্ট</span><span data-en style="display:none">Requests</span> <span id="reqBadge" class="sb-badge hidden"></span></button>
+  <button class="sb-btn" data-page="users"><i class="fas fa-users"></i> <span data-bn>ইউজার</span><span data-en style="display:none">Users</span></button>
+  <button class="sb-btn" data-page="notifications"><i class="fas fa-paper-plane"></i> <span data-bn>নোটিফিকেশন</span><span data-en style="display:none">Notify</span></button>
+  <div class="sb-label" data-bn>টুলস</div>
+  <button class="sb-btn" data-page="bulk"><i class="fas fa-file-import"></i> <span data-bn>ব্যাচ ইম্পোর্ট</span><span data-en style="display:none">Bulk Import</span></button>
+  <button class="sb-btn" data-page="storage"><i class="fas fa-image"></i> <span data-bn>ইমেজ আপলোড</span><span data-en style="display:none">Images</span></button>
+  <button class="sb-btn" data-page="logs"><i class="fas fa-history"></i> <span data-bn>অ্যাক্টিভিটি লগ</span><span data-en style="display:none">Logs</span></button>
+  <div class="sb-label" data-bn>সিস্টেম</div>
+  <button class="sb-btn" data-page="adsense"><i class="fas fa-dollar-sign"></i> <span data-bn>AdSense</span></button>
+  <button class="sb-btn" data-page="settings"><i class="fas fa-cog"></i> <span data-bn>সেটিংস</span><span data-en style="display:none">Settings</span></button>
   <div class="sb-foot">
-    <div class="sb-user"><strong id="sbName">—</strong><span id="sbRole"></span></div>
-    <button class="sb-btn danger" onclick="doLogout()" style="margin-top:6px"><i class="fas fa-sign-out-alt"></i> লগআউট</button>
+    <div class="sb-user"><strong id="sbName">—</strong><span id="sbRole" style="display:block;font-size:0.72rem"></span></div>
+    <button class="sb-btn danger" onclick="doLogout()" style="margin-top:6px"><i class="fas fa-sign-out-alt"></i> <span data-bn>লগআউট</span><span data-en style="display:none">Logout</span></button>
   </div>
 </aside>
 
 <!-- MAIN -->
-<main class="main">
+<main class="main" id="mainEl">
 <div class="topbar">
-  <h1 id="topTitle">ড্যাশবোর্ড</h1>
+  <div class="topbar-left">
+    <button class="mob-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <h1 id="topTitle" data-bn>ড্যাশবোর্ড</h1>
+  </div>
   <div class="topbar-right">
-    <button id="bellBtn" class="btn btn-ghost btn-sm" onclick="showPage_('requests')" title="নতুন রিকোয়েস্ট" style="position:relative">
+    <button id="bellBtn" class="btn btn-ghost btn-sm" onclick="gotoPage('requests')" title="রিকোয়েস্ট" style="position:relative">
       <i class="fas fa-bell"></i>
       <span id="bellDot" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%"></span>
     </button>
     <button id="langBtn" class="lang-toggle" onclick="toggleLang()">EN</button>
-    <button id="themeBtn" class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
-    <button class="btn btn-ghost btn-sm" onclick="syncUser()"><i class="fas fa-sync-alt"></i> Sync</button>
+    <button id="themeBtn" class="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button class="btn btn-ghost btn-sm" onclick="syncUser()" title="Sync"><i class="fas fa-sync-alt"></i></button>
   </div>
 </div>
+
+<!-- ══════════ PAGES ══════════ -->
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="page active">
   <div class="stats-grid">
-    <div class="stat-card"><div class="sc-label">BRANDS</div><div class="sc-val c" id="d-brands">—</div></div>
-    <div class="stat-card"><div class="sc-label">MODELS</div><div class="sc-val g" id="d-models">—</div></div>
-    <div class="stat-card"><div class="sc-label">CONTENTS</div><div class="sc-val" id="d-contents">—</div></div>
-    <div class="stat-card"><div class="sc-label">REQUESTS</div><div class="sc-val a" id="d-requests">—</div></div>
+    <div class="stat-card" style="--c1:var(--cyan)" onclick="gotoPage('brands')">
+      <div class="sc-label">BRANDS <i class="fas fa-tag sc-icon"></i></div>
+      <div class="sc-val c" id="d-brands">—</div>
+    </div>
+    <div class="stat-card" style="--c1:var(--green)" onclick="gotoPage('models')">
+      <div class="sc-label">MODELS <i class="fas fa-mobile-alt sc-icon"></i></div>
+      <div class="sc-val g" id="d-models">—</div>
+    </div>
+    <div class="stat-card" style="--c1:var(--purple)" onclick="gotoPage('contents')">
+      <div class="sc-label">CONTENTS <i class="fas fa-folder sc-icon"></i></div>
+      <div class="sc-val p" id="d-contents">—</div>
+    </div>
+    <div class="stat-card" style="--c1:var(--amber)" onclick="gotoPage('requests')">
+      <div class="sc-label">PENDING REQ <i class="fas fa-bell sc-icon"></i></div>
+      <div class="sc-val a" id="d-requests">—</div>
+    </div>
+    <div class="stat-card" style="--c1:var(--red)" onclick="gotoPage('users')">
+      <div class="sc-label">USERS <i class="fas fa-users sc-icon"></i></div>
+      <div class="sc-val r" id="d-users">—</div>
+    </div>
+    <div class="stat-card" style="--c1:var(--green)">
+      <div class="sc-label">DOWNLOADS <i class="fas fa-download sc-icon"></i></div>
+      <div class="sc-val g" id="d-downloads">—</div>
+    </div>
   </div>
+
+  <!-- Charts row -->
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-box-title"><i class="fas fa-chart-pie" style="color:var(--cyan)"></i> কন্টেন্ট বিভাজন</div>
+      <div style="position:relative;height:220px"><canvas id="dashChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title"><i class="fas fa-chart-bar" style="color:var(--cyan)"></i> ব্র্যান্ড-ওয়াইজ কন্টেন্ট</div>
+      <div style="position:relative;height:220px"><canvas id="brandChart"></canvas></div>
+    </div>
+  </div>
+
   <div class="card">
-    <div class="card-title"><i class="fas fa-clock"></i> সাম্প্রতিক রিকোয়েস্ট</div>
+    <div class="card-title"><i class="fas fa-clock"></i> <span data-bn>সাম্প্রতিক রিকোয়েস্ট</span><span data-en style="display:none">Recent Requests</span>
+      <button class="btn btn-ghost btn-xs ct-sub" onclick="gotoPage('requests')"><data-bn>সব দেখুন</data-bn></button>
+    </div>
     <div class="tw"><table id="dashReqTable">
       <thead><tr><th>মডেল</th><th>টাইপ</th><th>ইউজার</th><th>স্ট্যাটাস</th></tr></thead>
-      <tbody></tbody>
+      <tbody><tr><td colspan="4" class="empty-row">লোড হচ্ছে...</td></tr></tbody>
     </table></div>
   </div>
-</div>
 
-<!-- DASHBOARD CHART -->
-  <div class="card" style="margin-top:14px">
-    <div class="card-title"><i class="fas fa-chart-line"></i> কন্টেন্ট পরিসংখ্যান</div>
-    <div style="position:relative;height:280px"><canvas id="dashChart"></canvas></div>
-  </div>
-</div>
-
-<!-- BULK IMPORT PAGE -->
-<div id="bulkPage" class="page">
   <div class="card">
-    <div class="card-title"><i class="fas fa-file-import"></i> ব্যাচ ইম্পোর্ট (JSON / CSV)</div>
-    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
-      একাধিক মডেল বা কন্টেন্ট একসাথে যোগ করুন। JSON বা CSV ফাইল আপলোড করুন।
-    </p>
-    <div class="fr">
-      <select id="bulkType">
-        <option value="models">মডেল</option>
-        <option value="contents">কন্টেন্ট</option>
-        <option value="brands">ব্র্যান্ড</option>
-      </select>
-      <input type="file" id="bulkFile" accept=".json,.csv">
-      <button class="btn btn-cyan" onclick="doBulkImport()"><i class="fas fa-upload"></i> ইম্পোর্ট</button>
+    <div class="card-title"><i class="fas fa-fire"></i> <span data-bn>জনপ্রিয় কন্টেন্ট</span>
+      <span class="ct-sub">Top 5 by downloads</span>
     </div>
-    <details style="margin-top:14px;font-size:0.82rem;color:var(--muted)">
-      <summary style="cursor:pointer;color:var(--cyan)">📋 JSON ফরম্যাট দেখুন</summary>
-      <pre style="background:var(--bg2);padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto;font-family:var(--font-m);font-size:0.78rem">[
-  {"name":"Galaxy S23","specs":"SM-S911B","brandId":"samsung","order":1},
-  {"name":"Galaxy S24","specs":"SM-S921B","brandId":"samsung","order":2}
-]
-CSV: name,specs,brandId,order</pre>
-    </details>
-    <div id="bulkResult" style="margin-top:14px"></div>
-  </div>
-</div>
-
-<!-- IMAGE UPLOAD PAGE -->
-<div id="storagePage" class="page">
-  <div class="card">
-    <div class="card-title"><i class="fas fa-image"></i> ইমেজ আপলোড (Firebase Storage)</div>
-    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
-      ব্র্যান্ড লোগো, স্কিমেটিক্স ছবি বা যেকোনো ইমেজ আপলোড করুন। আপলোড হলে URL পাবেন।
-    </p>
-    <div class="fr">
-      <input type="file" id="imgFile" accept="image/*">
-      <input type="text" id="imgFolder" placeholder="ফোল্ডার (logos / schematics)" value="uploads">
-      <button class="btn btn-cyan" onclick="doImgUpload()"><i class="fas fa-cloud-upload-alt"></i> আপলোড</button>
-    </div>
-    <div id="imgResult" style="margin-top:14px"></div>
-    <div class="tw" style="margin-top:14px"><table id="imgTable">
-      <thead><tr><th>প্রিভিউ</th><th>নাম</th><th>URL</th><th>অ্যাকশন</th></tr></thead>
-      <tbody><tr><td colspan="4" class="empty-row">এখনো ইমেজ আপলোড হয়নি</td></tr></tbody>
-    </table></div>
-  </div>
-</div>
-
-<!-- ACTIVITY LOGS PAGE -->
-<div id="logsPage" class="page">
-  <div class="card">
-    <div class="card-title"><i class="fas fa-history"></i> অ্যাক্টিভিটি লগ</div>
-    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">
-      কে কখন কী এডিট/যোগ/মুছেছে — সব এখানে দেখা যাবে।
-    </p>
-    <div class="fr" style="margin-bottom:12px">
-      <button class="btn btn-ghost btn-sm" onclick="loadLogs()"><i class="fas fa-sync"></i> রিফ্রেশ</button>
-      <button class="btn btn-red btn-sm" onclick="clearLogs()" style="margin-left:auto"><i class="fas fa-trash"></i> পুরোনো লগ মুছুন</button>
-    </div>
-    <div class="tw"><table id="logsTable">
-      <thead><tr><th>সময়</th><th>ইউজার</th><th>অ্যাকশন</th><th>আইটেম</th></tr></thead>
-      <tbody><tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr></tbody>
+    <div class="tw"><table id="topContentsTable">
+      <thead><tr><th>#</th><th>শিরোনাম</th><th>টাইপ</th><th>ডাউনলোড</th></tr></thead>
+      <tbody><tr><td colspan="4" class="empty-row">লোড হচ্ছে...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -374,15 +362,22 @@ CSV: name,specs,brandId,order</pre>
 <!-- BRANDS -->
 <div id="brandsPage" class="page">
   <div class="card">
-    <div class="card-title"><i class="fas fa-tag"></i> ব্র্যান্ড যোগ করুন</div>
+    <div class="card-title"><i class="fas fa-plus-circle"></i> <span data-bn>ব্র্যান্ড যোগ করুন</span></div>
     <div class="fr">
       <input type="text" id="bName" placeholder="ব্র্যান্ড নাম (Samsung)">
-      <input type="text" id="bEmoji" placeholder="ইমোজি 🔵" style="max-width:110px" value="📱">
-      <input type="number" id="bOrder" placeholder="ক্রম" style="max-width:100px" value="99">
-      <button class="btn btn-green" onclick="addBrand()"><i class="fas fa-plus"></i> যোগ</button>
+      <input type="text" id="bEmoji" placeholder="ইমোজি" style="max-width:90px" value="📱">
+      <input type="url" id="bLogo" placeholder="লোগো URL (ঐচ্ছিক)" style="min-width:200px">
+      <input type="number" id="bOrder" placeholder="ক্রম" style="max-width:90px" value="99">
+      <button class="btn btn-green" onclick="addBrand()"><i class="fas fa-plus"></i> <span data-bn>যোগ</span></button>
     </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-list"></i> সব ব্র্যান্ড
+      <span class="ct-sub" id="brandCount"></span>
+    </div>
+    <div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="খুঁজুন..." oninput="filterBrandsTable(this.value)"></div>
     <div class="tw"><table id="brandsTable">
-      <thead><tr><th>ইমোজি</th><th>নাম</th><th>ID</th><th>ক্রম</th><th>অ্যাকশন</th></tr></thead>
+      <thead><tr><th>লোগো/ইমোজি</th><th>নাম</th><th>ID</th><th>ক্রম</th><th>মডেল</th><th>অ্যাকশন</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -391,31 +386,26 @@ CSV: name,specs,brandId,order</pre>
 <!-- MODELS -->
 <div id="modelsPage" class="page">
   <div class="card">
-    <div class="card-title"><i class="fas fa-mobile-alt"></i> মডেল যোগ করুন</div>
+    <div class="card-title"><i class="fas fa-plus-circle"></i> মডেল যোগ করুন</div>
     <div class="fr">
       <select id="mBrand"></select>
       <input type="text" id="mName" placeholder="মডেল নাম (Galaxy S23)">
       <input type="text" id="mSpecs" placeholder="স্পেসিফিকেশন (SM-S911B)">
+      <input type="url" id="mImage" placeholder="মডেল ইমেজ URL (ঐচ্ছিক)">
       <input type="number" id="mOrder" placeholder="ক্রম" style="max-width:90px" value="99">
       <button class="btn btn-green" onclick="addModel()"><i class="fas fa-plus"></i> যোগ</button>
     </div>
   </div>
   <div class="card">
-    <div class="card-title"><i class="fas fa-list"></i> সব মডেল</div>
-    <div class="fr" style="margin-bottom:12px">
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-<input id="adminSearch" placeholder="🔍 মডেল/স্পেস সার্চ..." oninput="adminSearch()" style="flex:1;min-width:200px;padding:9px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-m);font-size:.85rem">
-<button class="btn btn-cyan" onclick="exportModelsCSV()" data-tooltip="CSV এক্সপোর্ট"><i class="fas fa-file-csv"></i> CSV</button>
-<button class="btn btn-cyan" onclick="generateReport()" data-tooltip="PDF রিপোর্ট"><i class="fas fa-print"></i> রিপোর্ট</button>
-</div>
-<div class="bulk-bar" id="bulkBar" style="display:none">
-<span class="count" id="selectedCount">০টি সিলেক্টেড</span>
-<button onclick="bulkDeleteModels()"><i class="fas fa-trash"></i> সিলেক্টেড মুছুন</button>
-<button onclick="clearSelection()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text)">ক্লিয়ার</button>
-</div>
-<select id="mFilter" onchange="loadModelsTable(this.value)" style="max-width:180px"><option value="">সব ব্র্যান্ড</option></select>
+    <div class="card-title"><i class="fas fa-list"></i> সব মডেল
+      <span class="ct-sub" id="modelCount"></span>
     </div>
-    <div class="tw"><table id="modelsTable"><thead><tr><th style="width:30px"><input type="checkbox" onchange="document.querySelectorAll('.model-chk').forEach(c=>{c.checked=this.checked;toggleSelectModel(c.dataset.id)})"></th><th>মডেল</th><th>স্পেসিফিকেশন</th><th>ব্র্যান্ড</th><th>অ্যাকশন</th></tr></thead>
+    <div class="fr" style="margin-bottom:12px">
+      <select id="mFilter" onchange="loadModelsTable(this.value)" style="max-width:180px"><option value="">সব ব্র্যান্ড</option></select>
+      <div class="search-wrap" style="flex:1;margin-bottom:0"><i class="fas fa-search"></i><input type="text" placeholder="মডেল খুঁজুন..." oninput="filterModelsTable(this.value)"></div>
+    </div>
+    <div class="tw"><table id="modelsTable">
+      <thead><tr><th>মডেল</th><th>স্পেসিফিকেশন</th><th>ছবি</th><th>ব্র্যান্ড</th><th>কন্টেন্ট</th><th>অ্যাকশন</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -424,7 +414,7 @@ CSV: name,specs,brandId,order</pre>
 <!-- CONTENTS -->
 <div id="contentsPage" class="page">
   <div class="card">
-    <div class="card-title"><i class="fas fa-upload"></i> কন্টেন্ট আপলোড</div>
+    <div class="card-title"><i class="fas fa-cloud-upload-alt"></i> কন্টেন্ট আপলোড</div>
     <div class="fr">
       <select id="cBrand" onchange="loadCModelSel(this.value)"></select>
       <select id="cModel"><option value="">— মডেল —</option></select>
@@ -433,18 +423,27 @@ CSV: name,specs,brandId,order</pre>
         <option value="testpoint">📍 টেস্টপয়েন্ট</option>
         <option value="firmware">📦 ফার্মওয়্যার</option>
         <option value="code">💻 ইঞ্জিনিয়ারিং কোড</option>
+        <option value="pinout">🔌 পিনআউট</option>
+        <option value="repair">🔧 রিপেয়ার গাইড</option>
       </select>
     </div>
     <div class="fr">
       <input type="text" id="cTitle" placeholder="শিরোনাম *">
       <input type="text" id="cDesc" placeholder="বিবরণ">
       <input type="url" id="cUrl" placeholder="ফাইল URL (Google Drive / Telegram) *">
+    </div>
+    <div class="fr">
+      <input type="text" id="cTags" placeholder="ট্যাগ (কমা দিয়ে): sm-s911b, repair, pcb">
+      <input type="url" id="cThumb" placeholder="থাম্বনেইল URL (ঐচ্ছিক)">
+      <input type="url" id="cVideo" placeholder="YouTube ভিডিও URL (ঐচ্ছিক)">
       <button class="btn btn-cyan" onclick="addContent()"><i class="fas fa-cloud-upload-alt"></i> আপলোড</button>
     </div>
   </div>
   <div class="card">
-    <div class="card-title"><i class="fas fa-folder-open"></i> সব কন্টেন্ট</div>
-    <div class="fr" style="margin-bottom:12px">
+    <div class="card-title"><i class="fas fa-folder-open"></i> সব কন্টেন্ট
+      <span class="ct-sub" id="contentCount"></span>
+    </div>
+    <div class="fr" style="margin-bottom:8px">
       <select id="cfBrand" onchange="loadContentsTable()" style="max-width:160px"><option value="">সব ব্র্যান্ড</option></select>
       <select id="cfType" onchange="loadContentsTable()" style="max-width:160px">
         <option value="">সব টাইপ</option>
@@ -452,10 +451,13 @@ CSV: name,specs,brandId,order</pre>
         <option value="testpoint">টেস্টপয়েন্ট</option>
         <option value="firmware">ফার্মওয়্যার</option>
         <option value="code">কোড</option>
+        <option value="pinout">পিনআউট</option>
+        <option value="repair">রিপেয়ার গাইড</option>
       </select>
+      <div class="search-wrap" style="flex:1;margin-bottom:0"><i class="fas fa-search"></i><input type="text" placeholder="কন্টেন্ট খুঁজুন..." oninput="filterContentsTable(this.value)"></div>
     </div>
     <div class="tw"><table id="contentsTable">
-      <thead><tr><th>শিরোনাম</th><th>মডেল</th><th>টাইপ</th><th>ডাউনলোড</th><th>অ্যাকশন</th></tr></thead>
+      <thead><tr><th>শিরোনাম</th><th>মডেল</th><th>টাইপ</th><th>ডাউনলোড</th><th>তারিখ</th><th>অ্যাকশন</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -472,27 +474,190 @@ CSV: name,specs,brandId,order</pre>
         <option value="approved">অ্যাপ্রুভড</option>
         <option value="rejected">রিজেক্টেড</option>
       </select>
+      <button class="btn btn-ghost btn-sm" onclick="loadRequestsTable()"><i class="fas fa-sync"></i> রিফ্রেশ</button>
     </div>
     <div class="tw"><table id="requestsTable">
-      <thead><tr><th>মডেল</th><th>টাইপ</th><th>বিবরণ</th><th>ইউজার</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead>
+      <thead><tr><th>মডেল</th><th>টাইপ</th><th>বিবরণ</th><th>ইউজার</th><th>সময়</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead>
       <tbody></tbody>
     </table></div>
+  </div>
+</div>
+
+<!-- USERS -->
+<div id="usersPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-users"></i> রেজিস্টার্ড ইউজার
+      <span class="ct-sub" id="userListCount"></span>
+    </div>
+    <div class="fr" style="margin-bottom:12px">
+      <div class="search-wrap" style="flex:1;margin-bottom:0"><i class="fas fa-search"></i><input type="text" placeholder="ইউজার খুঁজুন..." oninput="filterUsers(this.value)"></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadUsersTable()"><i class="fas fa-sync"></i> রিফ্রেশ</button>
+    </div>
+    <div class="tw"><table id="usersTable">
+      <thead><tr><th>ইউজার</th><th>ইমেইল</th><th>যোগদান</th><th>ফেভারিট</th><th>রিকোয়েস্ট</th><th>অ্যাকশন</th></tr></thead>
+      <tbody><tr><td colspan="6" class="empty-row">লোড হচ্ছে...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notificationsPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-paper-plane"></i> ইউজারদের নোটিফিকেশন পাঠান</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">এখান থেকে যে মেসেজ পাঠাবেন তা ইউজার সাইটে ব্যানার/টোস্ট হিসেবে দেখাবে।</p>
+    <div class="mf"><label>মেসেজ টাইটেল</label><input type="text" id="notifTitle" placeholder="যেমন: নতুন কন্টেন্ট যোগ হয়েছে!"></div>
+    <div class="mf"><label>মেসেজ বডি</label><textarea id="notifBody" placeholder="বিস্তারিত বার্তা লিখুন..." style="min-height:90px"></textarea></div>
+    <div class="mf"><label>টাইপ</label>
+      <select id="notifType" style="width:100%;padding:9px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-b);font-size:0.86rem;outline:none">
+        <option value="info">ℹ️ তথ্য</option>
+        <option value="success">✅ সফল্তা</option>
+        <option value="warning">⚠️ সতর্কতা</option>
+        <option value="update">🔔 আপডেট</option>
+      </select>
+    </div>
+    <div class="mf"><label>মেয়াদ (ঘণ্টা)</label><input type="number" id="notifExpiry" value="24" min="1" max="720" style="width:120px;padding:9px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-b)"></div>
+    <button class="btn btn-cyan" onclick="sendNotification()"><i class="fas fa-paper-plane"></i> পাঠান</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-history"></i> পাঠানো নোটিফিকেশন</div>
+    <div class="tw"><table id="notifTable">
+      <thead><tr><th>টাইটেল</th><th>বার্তা</th><th>টাইপ</th><th>মেয়াদ</th><th>সময়</th><th>অ্যাকশন</th></tr></thead>
+      <tbody><tr><td colspan="6" class="empty-row">কোনো নোটিফিকেশন নেই</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- BULK IMPORT -->
+<div id="bulkPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-file-import"></i> ব্যাচ ইম্পোর্ট (JSON / CSV)</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">একাধিক মডেল বা কন্টেন্ট একসাথে যোগ করুন।</p>
+    <div class="fr">
+      <select id="bulkType">
+        <option value="models">মডেল</option>
+        <option value="contents">কন্টেন্ট</option>
+        <option value="brands">ব্র্যান্ড</option>
+      </select>
+      <input type="file" id="bulkFile" accept=".json,.csv">
+      <button class="btn btn-cyan" onclick="doBulkImport()"><i class="fas fa-upload"></i> ইম্পোর্ট</button>
+    </div>
+    <div id="bulkProgress" style="display:none;margin-bottom:10px">
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px" id="bulkProgressTxt">0 / 0</div>
+      <div class="prog-bar"><div class="prog-fill" id="bulkProgressFill" style="width:0%"></div></div>
+    </div>
+    <details style="margin-top:14px;font-size:0.82rem;color:var(--muted)">
+      <summary style="cursor:pointer;color:var(--cyan)">📋 JSON ফরম্যাট দেখুন</summary>
+      <pre style="background:var(--bg2);padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto;font-family:var(--font-m);font-size:0.78rem">[{"name":"Galaxy S23","specs":"SM-S911B","brandId":"samsung","order":1}]
+CSV: name,specs,brandId,order</pre>
+    </details>
+    <div id="bulkResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- IMAGE UPLOAD -->
+<div id="storagePage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-image"></i> ইমেজ আপলোড (Firebase Storage)</div>
+    <div class="fr">
+      <input type="file" id="imgFile" accept="image/*" multiple>
+      <input type="text" id="imgFolder" placeholder="ফোল্ডার" value="uploads">
+      <button class="btn btn-cyan" onclick="doImgUpload()"><i class="fas fa-cloud-upload-alt"></i> আপলোড</button>
+    </div>
+    <div id="imgResult" style="margin-top:14px"></div>
+    <div class="tw" style="margin-top:14px"><table id="imgTable">
+      <thead><tr><th>প্রিভিউ</th><th>নাম</th><th>URL (ক্লিক করে কপি)</th><th>সাইজ</th><th>অ্যাকশন</th></tr></thead>
+      <tbody><tr><td colspan="5" class="empty-row">কোনো ইমেজ নেই</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ACTIVITY LOGS -->
+<div id="logsPage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-history"></i> অ্যাক্টিভিটি লগ</div>
+    <div class="fr" style="margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="loadLogs()"><i class="fas fa-sync"></i> রিফ্রেশ</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportLogs()"><i class="fas fa-download"></i> এক্সপোর্ট</button>
+      <button class="btn btn-red btn-sm" onclick="confirmClearLogs()" style="margin-left:auto"><i class="fas fa-trash"></i> পুরোনো লগ মুছুন</button>
+    </div>
+    <div class="tw"><table id="logsTable">
+      <thead><tr><th>সময়</th><th>ইউজার</th><th>অ্যাকশন</th><th>আইটেম</th></tr></thead>
+      <tbody><tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ADSENSE -->
+<div id="adsensePage" class="page">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-dollar-sign"></i> Google AdSense সেটিংস</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">AdSense চালু করলে ইউজার সাইটে স্বয়ংক্রিয় বিজ্ঞাপন দেখাবে।</p>
+    <div class="mf" style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <label style="font-size:0.85rem;color:var(--text)">AdSense চালু/বন্ধ:</label>
+      <div class="toggle" id="adsToggle" onclick="toggleAds()" title="AdSense চালু/বন্ধ"></div>
+      <span id="adsToggleLabel" style="font-size:0.8rem;color:var(--muted)">বন্ধ</span>
+    </div>
+    <div class="mf"><label>Publisher ID (ca-pub-xxxxxxxxxxxxxxxx)</label><input type="text" id="adsClient" placeholder="ca-pub-1234567890123456"></div>
+    <div class="mf"><label>Auto Ads Slot ID</label><input type="text" id="adsSlot" placeholder="1234567890"></div>
+    <div class="mf"><label>Banner Ad Unit (Header)</label><input type="text" id="adsHeaderSlot" placeholder="9876543210"></div>
+    <div class="mf"><label>In-Article Ad Unit</label><input type="text" id="adsArticleSlot" placeholder="1122334455"></div>
+    <button class="btn btn-cyan" onclick="saveAdsSettings()"><i class="fas fa-save"></i> সেভ করুন</button>
+    <div style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:10px"><i class="fas fa-eye"></i> প্রিভিউ</div>
+      <div class="ad-preview">📢 এখানে AdSense বিজ্ঞাপন দেখাবে<br><small>Google AdSense · 728×90</small></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-info-circle"></i> AdSense যোগ করার ধাপ</div>
+    <ol style="font-size:0.85rem;color:var(--muted);line-height:2;padding-left:20px">
+      <li>Google AdSense অ্যাকাউন্ট তৈরি করুন → <a href="https://adsense.google.com" target="_blank" style="color:var(--cyan)">adsense.google.com</a></li>
+      <li>আপনার সাইট যোগ করুন ও অ্যাপ্রুভাল পান</li>
+      <li>Publisher ID (ca-pub-xxx) উপরে লিখুন</li>
+      <li>Ad Unit তৈরি করে Slot ID গুলো দিন</li>
+      <li>AdSense চালু করুন এবং সেভ করুন</li>
+    </ol>
   </div>
 </div>
 
 <!-- SETTINGS -->
 <div id="settingsPage" class="page">
   <div class="card">
-    <div class="card-title"><i class="fas fa-database"></i> ডেটা ব্যাকআপ</div>
-    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">সব Firestore ডেটা JSON ফরম্যাটে ডাউনলোড করুন।</p>
-    <button class="btn btn-ghost" onclick="exportData()"><i class="fas fa-download"></i> JSON এক্সপোর্ট</button>
+    <div class="card-title"><i class="fas fa-database"></i> ডেটা ব্যাকআপ ও রিস্টোর</div>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">সব Firestore ডেটা JSON ফরম্যাটে ডাউনলোড বা রিস্টোর করুন।</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-ghost" onclick="exportData()"><i class="fas fa-download"></i> JSON এক্সপোর্ট</button>
+      <button class="btn btn-ghost" onclick="exportData('brands')"><i class="fas fa-tag"></i> ব্র্যান্ড এক্সপোর্ট</button>
+      <button class="btn btn-ghost" onclick="exportData('models')"><i class="fas fa-mobile-alt"></i> মডেল এক্সপোর্ট</button>
+      <button class="btn btn-ghost" onclick="exportData('contents')"><i class="fas fa-folder"></i> কন্টেন্ট এক্সপোর্ট</button>
+    </div>
+    <div class="restore-drop" id="restoreDrop" onclick="document.getElementById('restoreFile').click()" ondragover="this.classList.add('drag-over');event.preventDefault()" ondragleave="this.classList.remove('drag-over')" ondrop="handleRestoreDrop(event)">
+      <i class="fas fa-upload" style="font-size:1.5rem;margin-bottom:8px;display:block"></i>
+      JSON ফাইল ড্র্যাগ করুন বা ক্লিক করুন → ডেটা রিস্টোর করুন
+    </div>
+    <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="doRestore(this.files[0])">
+    <div id="restoreResult" style="margin-top:12px"></div>
   </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-cog"></i> সাইট সেটিংস</div>
+    <div class="mf"><label>সাইটের নাম</label><input type="text" id="siteName" value="OXVIN SMARTO"></div>
+    <div class="mf"><label>সাইটের ট্যাগলাইন</label><input type="text" id="siteTagline" value="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস"></div>
+    <div class="mf"><label>যোগাযোগ ইমেইল</label><input type="email" id="siteEmail" placeholder="contact@oxvin.com"></div>
+    <div class="mf"><label>Telegram Channel Link</label><input type="url" id="siteTelegram" placeholder="https://t.me/oxvin_smarto"></div>
+    <div class="mf"><label>Telegram Bot Token (নোটিফিকেশনের জন্য)</label><input type="text" id="tgBotToken" placeholder="7xxxxxxxxx:AAxxxxxxxxxxxxxxxx"></div>
+    <div class="mf"><label>Telegram Chat ID</label><input type="text" id="tgChatId" placeholder="-100xxxxxxxxx"></div>
+    <button class="btn btn-cyan" onclick="saveSiteSettings()"><i class="fas fa-save"></i> সেভ করুন</button>
+    <button class="btn btn-ghost" style="margin-left:8px" onclick="testTelegramBot()"><i class="fab fa-telegram"></i> টেলিগ্রাম টেস্ট</button>
+  </div>
+
   <div class="card">
     <div class="card-title"><i class="fas fa-info-circle"></i> সিস্টেম তথ্য</div>
     <table style="font-size:0.82rem">
+      <tr><td style="padding:6px 12px;color:var(--muted)">Version</td><td style="padding:6px 12px;font-family:var(--font-m);color:var(--cyan)">OXVIN SMARTO v2.0</td></tr>
       <tr><td style="padding:6px 12px;color:var(--muted)">Project</td><td style="padding:6px 12px;font-family:var(--font-m)">oxvin-smarto</td></tr>
-      <tr><td style="padding:6px 12px;color:var(--muted)">Collections</td><td style="padding:6px 12px;font-family:var(--font-m)">oxvin_brands, oxvin_models, oxvin_contents, oxvin_requests</td></tr>
-      <tr><td style="padding:6px 12px;color:var(--muted)">User Site Sync</td><td style="padding:6px 12px;color:var(--green)">BroadcastChannel ✅</td></tr>
+      <tr><td style="padding:6px 12px;color:var(--muted)">Firebase</td><td style="padding:6px 12px;font-family:var(--font-m)">Auth + Firestore + Storage</td></tr>
+      <tr><td style="padding:6px 12px;color:var(--muted)">Collections</td><td style="padding:6px 12px;font-family:var(--font-m);font-size:0.72rem">oxvin_brands, oxvin_models, oxvin_contents, oxvin_requests, oxvin_logs, oxvin_images, oxvin_users, oxvin_notifications, oxvin_settings</td></tr>
+      <tr><td style="padding:6px 12px;color:var(--muted)">Sync</td><td style="padding:6px 12px;color:var(--green)">BroadcastChannel ✅</td></tr>
     </table>
   </div>
 </div>
@@ -501,17 +666,63 @@ CSV: name,specs,brandId,order</pre>
 </div>
 </div>
 
+<!-- ════ MODALS ════ -->
+
 <!-- EDIT CONTENT MODAL -->
 <div class="modal-bg" id="editModal">
   <div class="modal">
-    <div class="modal-title"><i class="fas fa-edit"></i> কন্টেন্ট এডিট</div>
+    <div class="modal-title"><i class="fas fa-edit" style="color:var(--cyan)"></i> কন্টেন্ট এডিট</div>
     <input type="hidden" id="editId">
     <div class="mf"><label>শিরোনাম</label><input type="text" id="editTitle"></div>
     <div class="mf"><label>বিবরণ</label><input type="text" id="editDesc"></div>
     <div class="mf"><label>ফাইল URL</label><input type="url" id="editUrl"></div>
+    <div class="mf"><label>থাম্বনেইল URL</label><input type="url" id="editThumb"></div>
+    <div class="mf"><label>YouTube ভিডিও URL</label><input type="url" id="editVideo"></div>
+    <div class="mf"><label>ট্যাগ (কমা দিয়ে)</label><input type="text" id="editTags"></div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal()">বাতিল</button>
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">বাতিল</button>
       <button class="btn btn-cyan" onclick="saveEdit()"><i class="fas fa-save"></i> সেভ</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODEL MODAL -->
+<div class="modal-bg" id="editModelModal">
+  <div class="modal">
+    <div class="modal-title"><i class="fas fa-mobile-alt" style="color:var(--cyan)"></i> মডেল এডিট</div>
+    <input type="hidden" id="editModelId">
+    <div class="mf"><label>মডেল নাম</label><input type="text" id="editModelName"></div>
+    <div class="mf"><label>স্পেসিফিকেশন</label><input type="text" id="editModelSpecs"></div>
+    <div class="mf"><label>মডেল ইমেজ URL</label><input type="url" id="editModelImage"></div>
+    <div class="mf"><label>কমন সমস্যা (টেকনিশিয়ান টিপস)</label><textarea id="editModelTips" placeholder="কমন বোর্ড ফল্ট, টেস্টপয়েন্ট তথ্য..."></textarea></div>
+    <div class="mf"><label>ক্রম</label><input type="number" id="editModelOrder" value="99"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('editModelModal')">বাতিল</button>
+      <button class="btn btn-cyan" onclick="saveModelEdit()"><i class="fas fa-save"></i> সেভ</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirmModal">
+  <div class="modal confirm-modal">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-msg" id="confirmMsg">এটি মুছবেন?</div>
+    <div class="confirm-item" id="confirmItem"></div>
+    <div class="modal-foot" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">বাতিল</button>
+      <button class="btn btn-red" id="confirmOkBtn" onclick="execConfirm()"><i class="fas fa-trash"></i> হ্যাঁ, মুছুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER DETAIL MODAL -->
+<div class="modal-bg" id="userModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title"><i class="fas fa-user" style="color:var(--cyan)"></i> ইউজার বিবরণ</div>
+    <div id="userModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('userModal')">বন্ধ</button>
     </div>
   </div>
 </div>
@@ -531,12 +742,17 @@ const FC={
   appId:"1:607560575581:web:abf88c2b09d6ee56ddfbb4",
   measurementId:"G-JZWM2R8QYZ"
 };
-const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests',logs:'oxvin_logs',images:'oxvin_images'};
-let storage;
+const FS={
+  brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',
+  requests:'oxvin_requests',logs:'oxvin_logs',images:'oxvin_images',
+  users:'oxvin_users',notifications:'oxvin_notifications',settings:'oxvin_settings'
+};
 const MASTER_UID='ncsMmnyh6Kaf0liUs9XDJnxuMac2';
 const MASTER_EMAIL='serfwerf59@gmail.com';
 
-let db,auth,fbReady=false,currentAdmin=null,allBrands=[],allModels=[],allContents=[];
+let db,auth,storage,fbReady=false,currentAdmin=null;
+let allBrands=[],allModels=[],allContents=[],allUsers=[];
+let _confirmFn=null;
 
 // ══════════════════════════════════════════
 // FIREBASE INIT
@@ -547,10 +763,12 @@ let db,auth,fbReady=false,currentAdmin=null,allBrands=[],allModels=[],allContent
     clearInterval(iv);
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
-      db=firebase.firestore();auth=firebase.auth();try{storage=firebase.storage()}catch(e){console.warn("Storage not enabled:",e.message)}
-      db.settings({ignoreUndefinedProperties:true});
+      db=firebase.firestore();
+      auth=firebase.auth();
+      try{storage=firebase.storage()}catch(e){console.warn("Storage:",e.message)}
+      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
       fbReady=true;
-      auth.onAuthStateChanged(function(user){user?checkAccess(user):showLogin()});
+      auth.onAuthStateChanged(u=>u?checkAccess(u):showLogin());
     }catch(e){console.error('[OXVIN Admin]',e.message)}
   },200);
 })();
@@ -570,7 +788,7 @@ async function doLogin(){
   try{
     await auth.signInWithEmailAndPassword(email,pass);
   }catch(e){
-    const m={'auth/user-not-found':'ইউজার পাওয়া যায়নি','auth/wrong-password':'পাসওয়ার্ড ভুল','auth/invalid-credential':'ইমেইল বা পাসওয়ার্ড ভুল','auth/too-many-requests':'অনেকবার চেষ্টা — কিছুক্ষণ পরে আবার','auth/network-request-failed':'নেটওয়ার্ক সমস্যা'};
+    const m={'auth/user-not-found':'ইউজার পাওয়া যায়নি','auth/wrong-password':'পাসওয়ার্ড ভুল','auth/invalid-credential':'ইমেইল বা পাসওয়ার্ড ভুল','auth/too-many-requests':'অনেকবার চেষ্টা — পরে আবার','auth/network-request-failed':'নেটওয়ার্ক সমস্যা'};
     errEl.textContent=m[e.code]||e.message;
     btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> লগইন';
   }
@@ -583,9 +801,12 @@ async function checkAccess(user){
   document.getElementById('sbRole').textContent=currentAdmin.role;
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('adminApp').style.display='block';
-  loadAll();
+  await loadAll();
+  startBellWatcher();
+  renderDashChart();
+  loadAdsSettings();
+  loadSiteSettings();
 }
-
 function showLogin(){
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('adminApp').style.display='none';
@@ -614,31 +835,45 @@ async function loadBrands(){
 
 async function loadDashboard(){
   try{
-    var [bs,ms,cs,rs]=await Promise.allSettled([
+    var [bs,ms,cs,rs,us]=await Promise.allSettled([
       db.collection(FS.brands).get(),
       db.collection(FS.models).get(),
       db.collection(FS.contents).get(),
-      db.collection(FS.requests).where('status','==','pending').get()
+      db.collection(FS.requests).where('status','==','pending').get(),
+      db.collection(FS.users).get()
     ]);
     const g=id=>document.getElementById(id);
     if(bs.status==='fulfilled')g('d-brands').textContent=bs.value.size;
     if(ms.status==='fulfilled')g('d-models').textContent=ms.value.size;
-    if(cs.status==='fulfilled')g('d-contents').textContent=cs.value.size;
+    if(cs.status==='fulfilled'){
+      g('d-contents').textContent=cs.value.size;
+      var totalDl=0;cs.value.docs.forEach(d=>{totalDl+=(d.data().downloadCount||0)});
+      g('d-downloads').textContent=totalDl.toLocaleString();
+    }
     if(rs.status==='fulfilled')g('d-requests').textContent=rs.value.size;
+    if(us.status==='fulfilled')g('d-users').textContent=us.value.size;
     // recent requests
-    var snap=await db.collection(FS.requests).orderBy('createdAt','desc').limit(5).get();
-    const tl={schematic:'스킴',testpoint:'টেস্টপয়েন্ট',firmware:'ফার্মওয়্যার',code:'কোড',other:'অন্য'};
-    document.querySelector('#dashReqTable tbody').innerHTML=snap.empty
+    var reqSnap=await db.collection(FS.requests).orderBy('createdAt','desc').limit(5).get();
+    const tl={schematic:'স্কিমেটিক্স',testpoint:'টেস্টপয়েন্ট',firmware:'ফার্মওয়্যার',code:'কোড',pinout:'পিনআউট',repair:'রিপেয়ার'};
+    document.querySelector('#dashReqTable tbody').innerHTML=reqSnap.empty
       ?'<tr><td colspan="4" class="empty-row">কোনো রিকোয়েস্ট নেই</td></tr>'
-      :snap.docs.map(d=>{const r=d.data();return`<tr><td>${r.model||'?'}</td><td>${tl[r.type]||r.type}</td><td>${r.userName||'—'}</td><td><span class="badge b-${r.status||'pending'}">${r.status||'pending'}</span></td></tr>`}).join('');
-  }catch(e){}
+      :reqSnap.docs.map(d=>{const r=d.data();return`<tr><td>${r.model||'?'}</td><td>${tl[r.type]||r.type}</td><td>${r.userName||'—'}</td><td><span class="badge b-${r.status||'pending'}">${r.status||'pending'}</span></td></tr>`}).join('');
+    // top contents
+    var topSnap=await db.collection(FS.contents).orderBy('downloadCount','desc').limit(5).get();
+    const typeEmoji={schematic:'📐',testpoint:'📍',firmware:'📦',code:'💻',pinout:'🔌',repair:'🔧'};
+    document.querySelector('#topContentsTable tbody').innerHTML=topSnap.empty
+      ?'<tr><td colspan="4" class="empty-row">কোনো কন্টেন্ট নেই</td></tr>'
+      :topSnap.docs.map((d,i)=>{const c=d.data();return`<tr><td style="font-family:var(--font-m);color:var(--cyan)">${i+1}</td><td style="font-weight:600">${c.title||'?'}</td><td>${typeEmoji[c.type]||'📄'} ${c.type||'?'}</td><td style="font-family:var(--font-m);color:var(--green)">${(c.downloadCount||0).toLocaleString()}</td></tr>`}).join('');
+  }catch(e){console.warn('Dashboard err',e)}
 }
 
 async function loadReqBadge(){
   try{
     var snap=await db.collection(FS.requests).where('status','==','pending').get();
     const b=document.getElementById('reqBadge');
-    if(snap.size>0){b.textContent=snap.size;b.style.display='inline'}
+    const dot=document.getElementById('bellDot');
+    if(snap.size>0){b.textContent=snap.size;b.classList.remove('hidden');if(dot)dot.style.display='block'}
+    else{b.classList.add('hidden');if(dot)dot.style.display='none'}
   }catch(e){}
 }
 
@@ -648,35 +883,45 @@ async function loadReqBadge(){
 async function addBrand(){
   const name=document.getElementById('bName').value.trim();
   const emoji=document.getElementById('bEmoji').value.trim();
+  const logo=document.getElementById('bLogo').value.trim();
   const order=parseInt(document.getElementById('bOrder').value)||99;
   if(!name){toast('ব্র্যান্ড নাম দিন','err');return}
   const id=name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   try{
-    await db.collection(FS.brands).doc(id).set({name,emoji:emoji||'📱',order,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection(FS.brands).doc(id).set({name,emoji:emoji||'📱',logo:logo||'',order,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     toast(`"${name}" যোগ হয়েছে`,'ok');
-    document.getElementById('bName').value='';
-    await loadBrands();syncUser();
+    document.getElementById('bName').value='';document.getElementById('bLogo').value='';
+    await loadBrands();syncUser();logAct('add_brand',name);
   }catch(e){toast('ব্র্যান্ড যোগ ব্যর্থ: '+e.message,'err')}
 }
 
+let _allBrandsRaw=[];
 function renderBrandsTable(){
-  document.querySelector('#brandsTable tbody').innerHTML=!allBrands.length
-    ?'<tr><td colspan="5" class="empty-row">কোনো ব্র্যান্ড নেই</td></tr>'
-    :allBrands.map(b=>`<tr>
-      <td style="font-size:1.2rem">${b.emoji}</td>
+  _allBrandsRaw=[...allBrands];
+  document.getElementById('brandCount').textContent=allBrands.length+' টি';
+  _renderBrandsTableData(allBrands);
+}
+function _renderBrandsTableData(brands){
+  document.querySelector('#brandsTable tbody').innerHTML=!brands.length
+    ?'<tr><td colspan="6" class="empty-row">কোনো ব্র্যান্ড নেই</td></tr>'
+    :brands.map(b=>`<tr>
+      <td>${b.logo?`<img src="${b.logo}" style="height:28px;border-radius:4px" onerror="this.style.display='none'" loading="lazy">`:''}${b.emoji||'📱'}</td>
       <td style="font-weight:600">${b.name}</td>
       <td style="font-family:var(--font-m);font-size:0.72rem;color:var(--dim)">${b.id}</td>
       <td>${b.order||'—'}</td>
-      <td><button class="btn btn-red btn-sm" onclick="deleteBrand('${b.id}','${b.name}')"><i class="fas fa-trash"></i></button></td>
+      <td style="font-family:var(--font-m);color:var(--cyan)">${b._modelCount||'—'}</td>
+      <td><button class="btn btn-red btn-xs" onclick="confirmDelete(()=>deleteBrand('${b.id}','${b.name}'),'${b.name}','ব্র্যান্ড মুছবেন?')"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
 }
-
+function filterBrandsTable(q){
+  const r=allBrands.filter(b=>b.name.toLowerCase().includes(q.toLowerCase())||b.id.includes(q.toLowerCase()));
+  _renderBrandsTableData(r);
+}
 async function deleteBrand(id,name){
-  if(!confirm(`"${name}" মুছবেন?`))return;
   try{
     await db.collection(FS.brands).doc(id).delete();
     toast(`"${name}" মুছে গেছে`,'ok');
-    await loadBrands();syncUser();
+    await loadBrands();syncUser();logAct('delete_brand',name);
   }catch(e){toast('ডিলিট ব্যর্থ','err')}
 }
 
@@ -687,15 +932,16 @@ async function addModel(){
   const brandId=document.getElementById('mBrand').value;
   const name=document.getElementById('mName').value.trim();
   const specs=document.getElementById('mSpecs').value.trim();
+  const image=document.getElementById('mImage').value.trim();
   const order=parseInt(document.getElementById('mOrder').value)||99;
   if(!brandId||!name){toast('ব্র্যান্ড ও মডেল নাম দিন','err');return}
   const id=name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')+'_'+Date.now().toString(36);
   try{
-    await db.collection(FS.models).doc(id).set({name,specs:specs||'',brandId,order,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection(FS.models).doc(id).set({name,specs:specs||'',brandId,image:image||'',order,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     toast(`"${name}" যোগ হয়েছে`,'ok');
-    document.getElementById('mName').value='';document.getElementById('mSpecs').value='';
+    document.getElementById('mName').value='';document.getElementById('mSpecs').value='';document.getElementById('mImage').value='';
     await loadModelsTable(document.getElementById('mFilter').value);
-    syncUser();
+    syncUser();logAct('add_model',name);
   }catch(e){toast('মডেল যোগ ব্যর্থ: '+e.message,'err')}
 }
 
@@ -706,24 +952,62 @@ async function loadModelsTable(brandId){
     try{q=q.orderBy('order')}catch(e){}
     var snap=await q.get();
     allModels=snap.docs.map(d=>({id:d.id,...d.data()}));
-    document.querySelector('#modelsTable tbody').innerHTML=!allModels.length
-      ?'<tr><td colspan="4" class="empty-row">কোনো মডেল নেই</td></tr>'
-      :allModels.map(m=>{
-          const b=allBrands.find(x=>x.id===m.brandId)||{emoji:'📱',name:m.brandId};
-          return`<tr>
-            <td style="font-weight:600">${m.name}</td>
-            <td style="font-size:0.78rem;color:var(--muted)">${m.specs||'—'}</td>
-            <td>${b.emoji} ${b.name}</td>
-            <td><button class="btn btn-red btn-sm" onclick="deleteModel('${m.id}','${m.name}')"><i class="fas fa-trash"></i></button></td>
-          </tr>`;
-        }).join('');
+    document.getElementById('modelCount').textContent=allModels.length+' টি';
+    _renderModelsTableData(allModels);
   }catch(e){toast('মডেল লোড ব্যর্থ','err')}
 }
-
+function _renderModelsTableData(models){
+  document.querySelector('#modelsTable tbody').innerHTML=!models.length
+    ?'<tr><td colspan="6" class="empty-row">কোনো মডেল নেই</td></tr>'
+    :models.map(m=>{
+        const b=allBrands.find(x=>x.id===m.brandId)||{emoji:'📱',name:m.brandId||'?'};
+        return`<tr>
+          <td style="font-weight:600">${m.name}</td>
+          <td style="font-size:0.78rem;color:var(--muted)">${m.specs||'—'}</td>
+          <td>${m.image?`<img src="${m.image}" style="height:24px;border-radius:3px" loading="lazy" onerror="this.remove()">`:'—'}</td>
+          <td>${b.emoji} ${b.name}</td>
+          <td style="font-family:var(--font-m);color:var(--cyan)">—</td>
+          <td style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-xs" onclick="openEditModel('${m.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-red btn-xs" onclick="confirmDelete(()=>deleteModel('${m.id}','${m.name}'),'${m.name}','মডেল মুছবেন?')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+}
+function filterModelsTable(q){
+  const r=allModels.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())||(m.specs||'').toLowerCase().includes(q.toLowerCase()));
+  _renderModelsTableData(r);
+}
 async function deleteModel(id,name){
-  if(!confirm(`"${name}" মুছবেন?`))return;
-  try{await db.collection(FS.models).doc(id).delete();toast(`"${name}" মুছে গেছে`,'ok');await loadModelsTable(document.getElementById('mFilter').value);syncUser()}
+  try{await db.collection(FS.models).doc(id).delete();toast(`"${name}" মুছে গেছে`,'ok');await loadModelsTable(document.getElementById('mFilter').value);syncUser();logAct('delete_model',name)}
   catch(e){toast('ডিলিট ব্যর্থ','err')}
+}
+function openEditModel(id){
+  const m=allModels.find(x=>x.id===id);if(!m)return;
+  document.getElementById('editModelId').value=id;
+  document.getElementById('editModelName').value=m.name||'';
+  document.getElementById('editModelSpecs').value=m.specs||'';
+  document.getElementById('editModelImage').value=m.image||'';
+  document.getElementById('editModelTips').value=m.tips||'';
+  document.getElementById('editModelOrder').value=m.order||99;
+  openModal('editModelModal');
+}
+async function saveModelEdit(){
+  const id=document.getElementById('editModelId').value;
+  const data={
+    name:document.getElementById('editModelName').value.trim(),
+    specs:document.getElementById('editModelSpecs').value.trim(),
+    image:document.getElementById('editModelImage').value.trim(),
+    tips:document.getElementById('editModelTips').value.trim(),
+    order:parseInt(document.getElementById('editModelOrder').value)||99,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    await db.collection(FS.models).doc(id).update(data);
+    toast('মডেল আপডেট হয়েছে','ok');closeModal('editModelModal');
+    await loadModelsTable(document.getElementById('mFilter').value);
+    syncUser();logAct('edit_model',data.name);
+  }catch(e){toast('আপডেট ব্যর্থ','err')}
 }
 
 // ══════════════════════════════════════════
@@ -736,7 +1020,6 @@ async function loadCModelSel(brandId){
     ?'<option>মডেল নেই</option>'
     :snap.docs.map(d=>`<option value="${d.id}">${d.data().name}</option>`).join('');
 }
-
 async function addContent(){
   const brandId=document.getElementById('cBrand').value;
   const modelId=document.getElementById('cModel').value;
@@ -744,15 +1027,22 @@ async function addContent(){
   const title=document.getElementById('cTitle').value.trim();
   const desc=document.getElementById('cDesc').value.trim();
   const url=document.getElementById('cUrl').value.trim();
+  const tags=document.getElementById('cTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const thumb=document.getElementById('cThumb').value.trim();
+  const video=document.getElementById('cVideo').value.trim();
   if(!title||!url||!modelId){toast('শিরোনাম, মডেল ও URL দিন','err');return}
   try{
-    await db.collection(FS.contents).add({brandId,modelId,type,title,description:desc,fileUrl:url,downloadCount:0,addedBy:currentAdmin?.uid||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const modelDoc=await db.collection(FS.models).doc(modelId).get();
+    const modelName=modelDoc.exists?modelDoc.data().name:'';
+    const brand=allBrands.find(b=>b.id===brandId)||{name:brandId};
+    await db.collection(FS.contents).add({brandId,modelId,modelName,brandName:brand.name,type,title,description:desc,fileUrl:url,tags,thumbnail:thumb,videoUrl:video,downloadCount:0,addedBy:currentAdmin?.uid||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     toast(`"${title}" আপলোড হয়েছে`,'ok');
-    document.getElementById('cTitle').value='';document.getElementById('cDesc').value='';document.getElementById('cUrl').value='';
-    await loadContentsTable();syncUser();
+    ['cTitle','cDesc','cUrl','cTags','cThumb','cVideo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+    await loadContentsTable();syncUser();logAct('add_content',title);
+    // Telegram notify
+    await notifyTelegram(`📤 নতুন কন্টেন্ট: ${title}\nব্র্যান্ড: ${brand.name} | ${type}`);
   }catch(e){toast('আপলোড ব্যর্থ: '+e.message,'err')}
 }
-
 async function loadContentsTable(){
   const bf=document.getElementById('cfBrand')?.value||'';
   const tf=document.getElementById('cfType')?.value||'';
@@ -760,248 +1050,204 @@ async function loadContentsTable(){
     var q=db.collection(FS.contents);
     if(bf)q=q.where('brandId','==',bf);
     if(tf)q=q.where('type','==',tf);
+    try{q=q.orderBy('createdAt','desc')}catch(e){}
     var snap=await q.get();
     allContents=snap.docs.map(d=>({id:d.id,...d.data()}));
-    const tl={schematic:'📐 স্কিম',testpoint:'📍 টেস্টপয়েন্ট',firmware:'📦 ফার্মওয়্যার',code:'💻 কোড'};
-    document.querySelector('#contentsTable tbody').innerHTML=!allContents.length
-      ?'<tr><td colspan="5" class="empty-row">কোনো কন্টেন্ট নেই</td></tr>'
-      :allContents.map(c=>{
-          const m=allModels.find(x=>x.id===c.modelId)||{name:c.modelId};
-          return`<tr>
-            <td style="font-weight:600">${c.title}</td>
-            <td style="font-size:0.78rem;color:var(--muted)">${m.name}</td>
-            <td>${tl[c.type]||c.type}</td>
-            <td style="font-family:var(--font-m)">${c.downloadCount||0}</td>
-            <td style="display:flex;gap:5px">
-              <button class="btn btn-ghost btn-sm" onclick="openEdit('${c.id}')"><i class="fas fa-edit"></i></button>
-              <button class="btn btn-red btn-sm" onclick="delContent('${c.id}','${c.title}')"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>`;
-        }).join('');
+    document.getElementById('contentCount').textContent=allContents.length+' টি';
+    _renderContentsTableData(allContents);
   }catch(e){toast('কন্টেন্ট লোড ব্যর্থ','err')}
 }
-
+function _renderContentsTableData(contents){
+  const typeEmoji={schematic:'📐',testpoint:'📍',firmware:'📦',code:'💻',pinout:'🔌',repair:'🔧'};
+  document.querySelector('#contentsTable tbody').innerHTML=!contents.length
+    ?'<tr><td colspan="6" class="empty-row">কোনো কন্টেন্ট নেই</td></tr>'
+    :contents.map(c=>{
+        const t=c.createdAt&&c.createdAt.toDate?c.createdAt.toDate().toLocaleDateString('bn-BD'):'—';
+        return`<tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${c.thumbnail?`<img src="${c.thumbnail}" style="height:28px;border-radius:3px" loading="lazy" onerror="this.remove()">`:''}
+              <span style="font-weight:600;font-size:0.84rem">${c.title}</span>
+            </div>
+          </td>
+          <td style="font-size:0.8rem;color:var(--muted)">${c.modelName||c.modelId||'?'}</td>
+          <td>${typeEmoji[c.type]||'📄'} <span class="badge b-info">${c.type||'?'}</span></td>
+          <td style="font-family:var(--font-m);color:var(--green)">${(c.downloadCount||0).toLocaleString()}</td>
+          <td style="font-size:0.75rem;color:var(--dim)">${t}</td>
+          <td style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-xs" onclick="openEdit('${c.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-red btn-xs" onclick="confirmDelete(()=>delContent('${c.id}','${c.title}'),'${(c.title||'').replace(/'/g,"\\'")}','কন্টেন্ট মুছবেন?')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+}
+function filterContentsTable(q){
+  const r=allContents.filter(c=>(c.title||'').toLowerCase().includes(q.toLowerCase())||(c.modelName||'').toLowerCase().includes(q.toLowerCase()));
+  _renderContentsTableData(r);
+}
 function openEdit(id){
   const c=allContents.find(x=>x.id===id);if(!c)return;
   document.getElementById('editId').value=id;
-  document.getElementById('editTitle').value=c.title;
+  document.getElementById('editTitle').value=c.title||'';
   document.getElementById('editDesc').value=c.description||'';
   document.getElementById('editUrl').value=c.fileUrl||'';
-  document.getElementById('editModal').classList.add('show');
+  document.getElementById('editThumb').value=c.thumbnail||'';
+  document.getElementById('editVideo').value=c.videoUrl||'';
+  document.getElementById('editTags').value=(c.tags||[]).join(', ');
+  openModal('editModal');
 }
 async function saveEdit(){
   const id=document.getElementById('editId').value;
-  const title=document.getElementById('editTitle').value.trim();
-  const desc=document.getElementById('editDesc').value.trim();
-  const url=document.getElementById('editUrl').value.trim();
-  if(!title||!url){toast('শিরোনাম ও URL দিন','err');return}
+  const tags=document.getElementById('editTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data={title:document.getElementById('editTitle').value.trim(),description:document.getElementById('editDesc').value.trim(),fileUrl:document.getElementById('editUrl').value.trim(),thumbnail:document.getElementById('editThumb').value.trim(),videoUrl:document.getElementById('editVideo').value.trim(),tags,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
   try{
-    await db.collection(FS.contents).doc(id).update({title,description:desc,fileUrl:url,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    toast('আপডেট হয়েছে','ok');closeModal();await loadContentsTable();syncUser();
-  }catch(e){toast('আপডেট ব্যর্থ','err')}
+    await db.collection(FS.contents).doc(id).update(data);
+    toast('সেভ হয়েছে','ok');closeModal('editModal');
+    await loadContentsTable();syncUser();logAct('edit_content',data.title);
+  }catch(e){toast('সেভ ব্যর্থ','err')}
 }
 async function delContent(id,title){
-  if(!confirm(`"${title}" মুছবেন?`))return;
-  try{await db.collection(FS.contents).doc(id).delete();toast('মুছে গেছে','ok');await loadContentsTable();syncUser()}
-  catch(e){toast('ডিলিট ব্যর্থ','err')}
+  try{
+    await db.collection(FS.contents).doc(id).delete();
+    toast(`"${title}" মুছে গেছে`,'ok');
+    await loadContentsTable();syncUser();logAct('delete_content',title);
+  }catch(e){toast('ডিলিট ব্যর্থ','err')}
 }
-function closeModal(){document.getElementById('editModal').classList.remove('show')}
 
 // ══════════════════════════════════════════
 // REQUESTS
 // ══════════════════════════════════════════
 async function loadRequestsTable(){
-  const sf=document.getElementById('rfStatus')?.value||'';
+  const status=document.getElementById('rfStatus')?.value||'';
   try{
-    var snap=await db.collection(FS.requests).orderBy('createdAt','desc').get();
-    var req=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(sf)req=req.filter(r=>r.status===sf);
-    const tl={schematic:'스킴',testpoint:'টেস্টপয়েন্ট',firmware:'ফার্মওয়্যার',code:'কোড',other:'অন্য'};
-    document.querySelector('#requestsTable tbody').innerHTML=!req.length
-      ?'<tr><td colspan="6" class="empty-row">কোনো রিকোয়েস্ট নেই</td></tr>'
-      :req.map(r=>`<tr>
-          <td style="font-weight:600">${r.model||'?'}</td>
-          <td>${tl[r.type]||r.type||'?'}</td>
-          <td style="font-size:0.78rem;color:var(--muted);max-width:160px">${r.issue||'—'}</td>
-          <td>${r.userName||'—'}</td>
-          <td><span class="badge b-${r.status||'pending'}">${r.status||'pending'}</span></td>
-          <td style="display:flex;gap:4px">
-            ${r.status==='pending'?`
-              <button class="btn btn-green btn-sm" onclick="updateReq('${r.id}','approved')">✅</button>
-              <button class="btn btn-red btn-sm" onclick="updateReq('${r.id}','rejected')">❌</button>
-            `:`<button class="btn btn-ghost btn-sm" onclick="updateReq('${r.id}','pending')">↩️</button>`}
-            <button class="btn btn-red btn-sm" onclick="delReq('${r.id}')"><i class="fas fa-trash"></i></button>
-          </td>
-        </tr>`).join('');
+    var q=db.collection(FS.requests);
+    if(status)q=q.where('status','==',status);
+    try{q=q.orderBy('createdAt','desc')}catch(e){}
+    var snap=await q.get();
+    const tl={schematic:'📐 স্কিমেটিক্স',testpoint:'📍 টেস্টপয়েন্ট',firmware:'📦 ফার্মওয়্যার',code:'💻 কোড',other:'অন্য'};
+    document.querySelector('#requestsTable tbody').innerHTML=snap.empty
+      ?'<tr><td colspan="7" class="empty-row">কোনো রিকোয়েস্ট নেই</td></tr>'
+      :snap.docs.map(d=>{
+          const r={id:d.id,...d.data()};
+          const t=r.createdAt&&r.createdAt.toDate?r.createdAt.toDate().toLocaleDateString('bn-BD'):'—';
+          return`<tr>
+            <td style="font-weight:600">${r.model||'?'}</td>
+            <td>${tl[r.type]||r.type}</td>
+            <td style="max-width:180px;font-size:0.8rem;color:var(--muted)">${(r.description||'').substring(0,60)}</td>
+            <td style="font-size:0.8rem">${r.userName||r.userEmail||'—'}</td>
+            <td style="font-size:0.75rem;color:var(--dim)">${t}</td>
+            <td><span class="badge b-${r.status||'pending'}">${r.status||'pending'}</span></td>
+            <td style="display:flex;gap:4px;flex-wrap:wrap">
+              ${r.status!=='approved'?`<button class="btn btn-green btn-xs" onclick="updateReq('${r.id}','approved')">✅</button>`:''}
+              ${r.status!=='rejected'?`<button class="btn btn-red btn-xs" onclick="updateReq('${r.id}','rejected')">❌</button>`:''}
+              ${r.status!=='pending'?`<button class="btn btn-ghost btn-xs" onclick="updateReq('${r.id}','pending')">↩️</button>`:''}
+              <button class="btn btn-red btn-xs" onclick="confirmDelete(()=>delReq('${r.id}'),'রিকোয়েস্ট','মুছবেন?')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>`;
+        }).join('');
   }catch(e){toast('রিকোয়েস্ট লোড ব্যর্থ','err')}
 }
-
 async function updateReq(id,status){
-  try{await db.collection(FS.requests).doc(id).update({status,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});toast(`${status}!`,'ok');await loadRequestsTable();loadReqBadge()}
-  catch(e){toast('আপডেট ব্যর্থ','err')}
+  try{
+    await db.collection(FS.requests).doc(id).update({status,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast(`${status}!`,'ok');await loadRequestsTable();loadReqBadge();
+    logAct('update_request',id+' → '+status);
+  }catch(e){toast('আপডেট ব্যর্থ','err')}
 }
 async function delReq(id){
-  if(!confirm('রিকোয়েস্ট মুছবেন?'))return;
   try{await db.collection(FS.requests).doc(id).delete();toast('মুছে গেছে','ok');await loadRequestsTable()}
   catch(e){toast('ডিলিট ব্যর্থ','err')}
 }
 
 // ══════════════════════════════════════════
-// EXPORT
+// USERS
 // ══════════════════════════════════════════
-async function exportData(){
+async function loadUsersTable(){
   try{
-    var [bs,ms,cs,rs]=await Promise.all([db.collection(FS.brands).get(),db.collection(FS.models).get(),db.collection(FS.contents).get(),db.collection(FS.requests).get()]);
-    const data={exportDate:new Date().toISOString(),brands:bs.docs.map(d=>({id:d.id,...d.data()})),models:ms.docs.map(d=>({id:d.id,...d.data()})),contents:cs.docs.map(d=>({id:d.id,...d.data()})),requests:rs.docs.map(d=>({id:d.id,...d.data()}))};
-    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='oxvin_backup_'+Date.now()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
-    toast('ব্যাকআপ ডাউনলোড হচ্ছে','ok');
-  }catch(e){toast('এক্সপোর্ট ব্যর্থ','err')}
+    var snap=await db.collection(FS.users).orderBy('createdAt','desc').limit(100).get();
+    allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('userListCount').textContent=allUsers.length+' জন';
+    _renderUsersTable(allUsers);
+  }catch(e){
+    document.querySelector('#usersTable tbody').innerHTML='<tr><td colspan="6" class="empty-row" style="color:var(--amber)">⚠️ oxvin_users কালেকশন থেকে ডেটা পাওয়া যায়নি। ইউজাররা লগইন করলে স্বয়ংক্রিয়ভাবে এখানে আসবে।</td></tr>';
+  }
 }
-
-// ══════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════
-function populateSelects(){
-  const sels=['mBrand','cBrand','cfBrand','mFilter'];
-  sels.forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    const isFilter=id.startsWith('cf')||id==='mFilter';
-    el.innerHTML=(isFilter?'<option value="">সব ব্র্যান্ড</option>':'')
-      +allBrands.map(b=>`<option value="${b.id}">${b.emoji} ${b.name}</option>`).join('');
-  });
-  if(allBrands.length)loadCModelSel(allBrands[0].id);
+function _renderUsersTable(users){
+  document.querySelector('#usersTable tbody').innerHTML=!users.length
+    ?'<tr><td colspan="6" class="empty-row">কোনো ইউজার নেই</td></tr>'
+    :users.map(u=>{
+        const t=u.createdAt&&u.createdAt.toDate?u.createdAt.toDate().toLocaleDateString('bn-BD'):'—';
+        const initials=(u.displayName||u.email||'?').charAt(0).toUpperCase();
+        return`<tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="user-avatar">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentNode.textContent='${initials}'">`:`${initials}`}</div><span>${u.displayName||'—'}</span></div></td>
+          <td style="font-size:0.8rem;color:var(--muted)">${u.email||'—'}</td>
+          <td style="font-size:0.75rem;color:var(--dim)">${t}</td>
+          <td style="font-family:var(--font-m);color:var(--amber)">${u.favoriteCount||0}</td>
+          <td style="font-family:var(--font-m);color:var(--cyan)">${u.requestCount||0}</td>
+          <td><button class="btn btn-ghost btn-xs" onclick="viewUser('${u.id}')"><i class="fas fa-eye"></i></button></td>
+        </tr>`;
+      }).join('');
 }
-
-function syncUser(){
-  try{var ch=new BroadcastChannel('oxvin_sync');ch.postMessage({type:'data_updated',ts:Date.now()});ch.close()}catch(e){}
+function filterUsers(q){
+  const r=allUsers.filter(u=>(u.displayName||'').toLowerCase().includes(q.toLowerCase())||(u.email||'').toLowerCase().includes(q.toLowerCase()));
+  _renderUsersTable(r);
 }
-
-// ══════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════
-const pageLoaders={
-  dashboard:()=>loadDashboard(),
-  brands:()=>loadBrands(),
-  models:()=>{loadModelsTable('')},
-  contents:()=>{loadModels().then(()=>{populateSelects();loadContentsTable()})},
-  requests:()=>loadRequestsTable(),
-  settings:()=>{}
-};
-async function loadModels(){
-  var snap=await db.collection(FS.models).get();
-  allModels=snap.docs.map(d=>({id:d.id,...d.data()}));
-}
-const pageTitles={dashboard:'ড্যাশবোর্ড',brands:'ব্র্যান্ড',models:'মডেল',contents:'কন্টেন্ট',requests:'রিকোয়েস্ট',settings:'সেটিংস'};
-
-document.querySelectorAll('.sb-btn[data-page]').forEach(btn=>{
-  btn.addEventListener('click',function(){
-    const p=this.dataset.page;
-    document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
-    this.classList.add('active');
-    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-    document.getElementById(p+'Page').classList.add('active');
-    document.getElementById('topTitle').textContent=pageTitles[p]||p;
-    if(pageLoaders[p])pageLoaders[p]();
-  });
-});
-
-document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
-
-
-
-// ══════════════════════════════════════════
-// THEME + LANG TOGGLE
-// ══════════════════════════════════════════
-
-window.toggleTheme=function(){
-  var cur=document.documentElement.getAttribute('data-theme')||'dark';
-  var nxt=cur==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',nxt);
-  try{localStorage.setItem('oxvin_theme',nxt)}catch(e){}
-  var b=document.getElementById('themeBtn');if(b)b.textContent=nxt==='dark'?'☀️ Light':'🌙 Dark';
-};
-window.toggleLang=function(){
-  var cur=document.documentElement.getAttribute('data-lang')||'bn';
-  var nxt=cur==='bn'?'en':'bn';
-  document.documentElement.setAttribute('data-lang',nxt);
-  try{localStorage.setItem('oxvin_lang',nxt)}catch(e){}
-  var b=document.getElementById('langBtn');if(b)b.textContent=nxt==='bn'?'EN':'বাং';
-};
-document.addEventListener('DOMContentLoaded',function(){
-  var t=document.getElementById('themeBtn');
-  if(t)t.textContent=(document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'☀️ Light':'🌙 Dark';
-  var l=document.getElementById('langBtn');
-  if(l)l.textContent=(document.documentElement.getAttribute('data-lang')||'bn')==='bn'?'EN':'বাং';
-});
-
-
-// ══════════════════════════════════════════
-// ACTIVITY LOG HELPER
-// ══════════════════════════════════════════
-async function logAct(action,item){
-  if(!db||!currentAdmin)return;
+async function viewUser(id){
+  const u=allUsers.find(x=>x.id===id)||{};
+  // load user's requests
+  let reqCount=0,favCount=0;
   try{
-    await db.collection(FS.logs).add({
-      action,item:item||'',
-      uid:currentAdmin.uid,email:currentAdmin.email,name:currentAdmin.name,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    var rs=await db.collection(FS.requests).where('userId','==',id).get();reqCount=rs.size;
+  }catch(e){}
+  document.getElementById('userModalBody').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div class="user-avatar" style="width:48px;height:48px;font-size:1.2rem">${u.displayName?u.displayName.charAt(0).toUpperCase():'?'}</div>
+      <div><div style="font-weight:700;font-size:1rem">${u.displayName||'—'}</div><div style="font-size:0.8rem;color:var(--muted)">${u.email||'—'}</div></div>
+    </div>
+    <table style="width:100%;font-size:0.83rem">
+      <tr><td style="color:var(--muted);padding:5px 8px">UID</td><td style="font-family:var(--font-m);font-size:0.72rem">${u.id}</td></tr>
+      <tr><td style="color:var(--muted);padding:5px 8px">যোগদান</td><td>${u.createdAt&&u.createdAt.toDate?u.createdAt.toDate().toLocaleString('bn-BD'):'—'}</td></tr>
+      <tr><td style="color:var(--muted);padding:5px 8px">ফেভারিট</td><td style="color:var(--amber)">${u.favoriteCount||0} টি</td></tr>
+      <tr><td style="color:var(--muted);padding:5px 8px">রিকোয়েস্ট</td><td style="color:var(--cyan)">${reqCount} টি</td></tr>
+      <tr><td style="color:var(--muted);padding:5px 8px">লগইন পদ্ধতি</td><td>${u.provider||'Email'}</td></tr>
+    </table>`;
+  openModal('userModal');
+}
+
+// ══════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════
+async function sendNotification(){
+  const title=document.getElementById('notifTitle').value.trim();
+  const body=document.getElementById('notifBody').value.trim();
+  const type=document.getElementById('notifType').value;
+  const expiry=parseInt(document.getElementById('notifExpiry').value)||24;
+  if(!title||!body){toast('টাইটেল ও বার্তা দিন','err');return}
+  const expiresAt=new Date(Date.now()+expiry*3600*1000);
+  try{
+    await db.collection(FS.notifications).add({title,body,type,expiresAt:firebase.firestore.Timestamp.fromDate(expiresAt),active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdBy:currentAdmin?.email||''});
+    toast('নোটিফিকেশন পাঠানো হয়েছে','ok');
+    document.getElementById('notifTitle').value='';document.getElementById('notifBody').value='';
+    syncUser();loadNotifTable();logAct('send_notification',title);
+    await notifyTelegram(`📣 নোটিফিকেশন পাঠানো: ${title}\n${body}`);
+  }catch(e){toast('পাঠানো ব্যর্থ','err')}
+}
+async function loadNotifTable(){
+  try{
+    var snap=await db.collection(FS.notifications).orderBy('createdAt','desc').limit(20).get();
+    const typeIcon={info:'ℹ️',success:'✅',warning:'⚠️',update:'🔔'};
+    document.querySelector('#notifTable tbody').innerHTML=snap.empty
+      ?'<tr><td colspan="6" class="empty-row">কোনো নোটিফিকেশন নেই</td></tr>'
+      :snap.docs.map(d=>{
+          const n={id:d.id,...d.data()};
+          const t=n.createdAt&&n.createdAt.toDate?n.createdAt.toDate().toLocaleDateString('bn-BD'):'—';
+          const exp=n.expiresAt&&n.expiresAt.toDate?n.expiresAt.toDate().toLocaleString('bn-BD'):'—';
+          return`<tr><td style="font-weight:600">${n.title}</td><td style="font-size:0.8rem;color:var(--muted)">${(n.body||'').substring(0,50)}...</td><td>${typeIcon[n.type]||'ℹ️'} ${n.type}</td><td style="font-size:0.75rem;color:var(--dim)">${exp}</td><td style="font-size:0.75rem;color:var(--dim)">${t}</td><td><button class="btn btn-red btn-xs" onclick="delNotif('${n.id}')"><i class="fas fa-trash"></i></button></td></tr>`;
+        }).join('');
   }catch(e){}
 }
-async function loadLogs(){
-  try{
-    var snap=await db.collection(FS.logs).orderBy('createdAt','desc').limit(100).get();
-    document.querySelector('#logsTable tbody').innerHTML=snap.empty
-      ?'<tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr>'
-      :snap.docs.map(d=>{var l=d.data();var t=l.createdAt&&l.createdAt.toDate?l.createdAt.toDate().toLocaleString('bn-BD'):'—';return`<tr><td style="font-size:0.76rem;color:var(--muted);font-family:var(--font-m)">${t}</td><td style="font-size:0.82rem">${l.name||l.email||'?'}</td><td><span class="badge b-pending">${l.action}</span></td><td style="font-size:0.82rem;color:var(--muted)">${l.item||'—'}</td></tr>`}).join('');
-  }catch(e){toast('লগ লোড ব্যর্থ','err')}
-}
-async function clearLogs(){
-  if(!confirm('৭ দিনের পুরোনো সব লগ মুছবেন?'))return;
-  try{
-    var cutoff=new Date(Date.now()-7*24*3600*1000);
-    var snap=await db.collection(FS.logs).where('createdAt','<',cutoff).get();
-    var batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();
-    toast(snap.size+' টি লগ মুছে গেছে','ok');loadLogs();
-  }catch(e){toast('মুছতে ব্যর্থ','err')}
-}
-
-// ══════════════════════════════════════════
-// DASHBOARD CHART
-// ══════════════════════════════════════════
-let dashChartInst=null;
-async function renderDashChart(){
-  var canvas=document.getElementById('dashChart');
-  if(!canvas||typeof Chart==='undefined')return;
-  try{
-    var snap=await db.collection(FS.contents).get();
-    var cnt={schematic:0,testpoint:0,firmware:0,code:0};
-    snap.docs.forEach(d=>{var t=d.data().type;if(cnt[t]!==undefined)cnt[t]++});
-    if(dashChartInst)dashChartInst.destroy();
-    dashChartInst=new Chart(canvas.getContext('2d'),{
-      type:'doughnut',
-      data:{labels:['স্কিমেটিক্স','টেস্টপয়েন্ট','ফার্মওয়্যার','কোড'],
-        datasets:[{data:[cnt.schematic,cnt.testpoint,cnt.firmware,cnt.code],
-          backgroundColor:['#00e5ff','#f59e0b','#10b981','#8b5cf6'],borderWidth:0}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom',labels:{color:getComputedStyle(document.body).color}}}}
-    });
-  }catch(e){console.warn('chart err',e.message)}
-}
-
-// ══════════════════════════════════════════
-// NOTIFICATION BELL — listen for new pending requests
-// ══════════════════════════════════════════
-function startBellWatcher(){
-  if(!db)return;
-  try{
-    db.collection(FS.requests).where('status','==','pending').onSnapshot(snap=>{
-      var b=document.getElementById('bellDot');
-      var rb=document.getElementById('reqBadge');
-      if(snap.size>0){if(b)b.style.display='block';if(rb){rb.textContent=snap.size;rb.style.display='inline'}}
-      else{if(b)b.style.display='none';if(rb)rb.style.display='none'}
-    });
-  }catch(e){}
+async function delNotif(id){
+  try{await db.collection(FS.notifications).doc(id).delete();toast('মুছে গেছে','ok');loadNotifTable()}catch(e){}
 }
 
 // ══════════════════════════════════════════
@@ -1013,11 +1259,11 @@ async function doBulkImport(){
   var resEl=document.getElementById('bulkResult');
   if(!f){toast('ফাইল বাছুন','err');return}
   resEl.innerHTML='<div style="color:var(--muted);font-size:0.83rem">পার্সিং...</div>';
+  document.getElementById('bulkProgress').style.display='block';
   try{
     var text=await f.text();var rows=[];
     if(f.name.endsWith('.json')){rows=JSON.parse(text);if(!Array.isArray(rows))throw new Error('JSON অ্যারে হতে হবে')}
-    else{var lines=text.trim().split(/\r?\n/);var hdr=lines[0].split(',').map(s=>s.trim());
-      rows=lines.slice(1).map(ln=>{var v=ln.split(',');var o={};hdr.forEach((h,i)=>o[h]=(v[i]||'').trim());return o})}
+    else{var lines=text.trim().split(/\r?\n/);var hdr=lines[0].split(',').map(s=>s.trim());rows=lines.slice(1).map(ln=>{var v=ln.split(',');var o={};hdr.forEach((h,i)=>o[h]=(v[i]||'').trim());return o})}
     var col=FS[type];if(!col)throw new Error('অজানা টাইপ');
     var ok=0,fail=0;
     for(var i=0;i<rows.length;i++){
@@ -1030,46 +1276,55 @@ async function doBulkImport(){
         else await db.collection(col).add(r);
         ok++;
       }catch(e){fail++}
+      const pct=Math.round(((i+1)/rows.length)*100);
+      document.getElementById('bulkProgressFill').style.width=pct+'%';
+      document.getElementById('bulkProgressTxt').textContent=(i+1)+' / '+rows.length;
     }
-    resEl.innerHTML='<div style="padding:10px;background:rgba(16,185,129,0.1);border-radius:7px;color:var(--green)">✅ '+ok+' টি সফল, ❌ '+fail+' টি ব্যর্থ</div>';
+    resEl.innerHTML=`<div style="padding:10px;background:rgba(16,185,129,0.1);border-radius:7px;color:var(--green)">✅ ${ok} টি সফল${fail?` · ❌ ${fail} টি ব্যর্থ`:''}</div>`;
     toast(ok+' টি ইম্পোর্ট হয়েছে','ok');
-    logAct('bulk_import',type+' ('+ok+' items)');
-    syncUser();
-  }catch(e){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ '+e.message+'</div>'}
+    logAct('bulk_import',type+' ('+ok+')');syncUser();
+    document.getElementById('bulkProgress').style.display='none';
+  }catch(e){resEl.innerHTML=`<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ ${e.message}</div>`;document.getElementById('bulkProgress').style.display='none'}
 }
 
 // ══════════════════════════════════════════
-// IMAGE UPLOAD (Firebase Storage)
+// IMAGE UPLOAD
 // ══════════════════════════════════════════
 async function doImgUpload(){
-  var f=document.getElementById('imgFile').files[0];
+  var files=document.getElementById('imgFile').files;
   var folder=(document.getElementById('imgFolder').value.trim()||'uploads').replace(/[^a-z0-9_\-]/gi,'_');
   var resEl=document.getElementById('imgResult');
-  if(!f){toast('ইমেজ বাছুন','err');return}
-  if(!storage){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ Firebase Storage enable করতে হবে। Firebase Console → Storage → Get Started।</div>';return}
+  if(!files.length){toast('ইমেজ বাছুন','err');return}
+  if(!storage){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ Firebase Storage enable করুন।</div>';return}
   resEl.innerHTML='<div style="color:var(--muted);font-size:0.83rem">আপলোড হচ্ছে...</div>';
-  try{
-    var path=folder+'/'+Date.now()+'_'+f.name.replace(/\s+/g,'_');
-    var ref=storage.ref().child(path);
-    var snap=await ref.put(f);
-    var url=await snap.ref.getDownloadURL();
-    await db.collection(FS.images).add({path,url,name:f.name,size:f.size,createdAt:firebase.firestore.FieldValue.serverTimestamp(),uploadedBy:currentAdmin?.uid||''});
-    resEl.innerHTML='<div style="padding:12px;background:var(--card2);border-radius:8px"><img src="'+url+'" style="max-height:80px;border-radius:6px;margin-bottom:8px"><br><input value="'+url+'" readonly style="width:100%;padding:7px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.78rem" onclick="this.select()"></div>';
-    toast('আপলোড সফল! URL কপি করুন','ok');
-    logAct('upload_image',f.name);loadImgTable();
-  }catch(e){resEl.innerHTML='<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ '+e.message+'</div>'}
+  var results=[];
+  for(var fi=0;fi<files.length;fi++){
+    var f=files[fi];
+    try{
+      var path=folder+'/'+Date.now()+'_'+f.name.replace(/\s+/g,'_');
+      var ref=storage.ref().child(path);
+      var snap=await ref.put(f);
+      var url=await snap.ref.getDownloadURL();
+      await db.collection(FS.images).add({path,url,name:f.name,size:f.size,createdAt:firebase.firestore.FieldValue.serverTimestamp(),uploadedBy:currentAdmin?.uid||''});
+      results.push({url,name:f.name});
+    }catch(e){toast('আপলোড ব্যর্থ: '+f.name,'err')}
+  }
+  if(results.length){
+    resEl.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+results.map(r=>`<div style="padding:10px;background:var(--card2);border-radius:7px;min-width:200px"><img src="${r.url}" style="max-height:70px;border-radius:5px;margin-bottom:6px;display:block"><input value="${r.url}" readonly style="width:100%;padding:5px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.72rem" onclick="this.select()" title="ক্লিক করে সিলেক্ট করুন"></div>`).join('')+'</div>';
+    toast(results.length+' টি আপলোড সফল','ok');
+    logAct('upload_images',results.length+' files');loadImgTable();
+  }
 }
 async function loadImgTable(){
   if(!db)return;
   try{
-    var snap=await db.collection(FS.images).orderBy('createdAt','desc').limit(50).get();
+    var snap=await db.collection(FS.images).orderBy('createdAt','desc').limit(60).get();
     document.querySelector('#imgTable tbody').innerHTML=snap.empty
-      ?'<tr><td colspan="4" class="empty-row">এখনো ইমেজ আপলোড হয়নি</td></tr>'
-      :snap.docs.map(d=>{var i=d.data();return`<tr><td><img src="${i.url}" style="height:38px;border-radius:5px"></td><td style="font-size:0.82rem">${i.name||'—'}</td><td><input value="${i.url}" readonly style="width:100%;max-width:280px;padding:5px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.72rem" onclick="this.select()"></td><td><button class="btn btn-red btn-sm" onclick="delImg('${d.id}','${i.path||''}')"><i class="fas fa-trash"></i></button></td></tr>`}).join('');
+      ?'<tr><td colspan="5" class="empty-row">কোনো ইমেজ নেই</td></tr>'
+      :snap.docs.map(d=>{var i=d.data();var kb=i.size?Math.round(i.size/1024)+'KB':'?';return`<tr><td><img src="${i.url}" style="height:38px;border-radius:5px" loading="lazy"></td><td style="font-size:0.82rem">${i.name||'—'}</td><td><input value="${i.url}" readonly style="width:100%;max-width:260px;padding:5px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--cyan);font-family:var(--font-m);font-size:0.72rem" onclick="this.select()"></td><td style="font-size:0.75rem;color:var(--dim)">${kb}</td><td><button class="btn btn-red btn-xs" onclick="confirmDelete(()=>delImg('${d.id}','${i.path||''}'),'${(i.name||'').replace(/'/g,"\\'")}','ইমেজ মুছবেন?')"><i class="fas fa-trash"></i></button></td></tr>`}).join('');
   }catch(e){}
 }
 async function delImg(id,path){
-  if(!confirm('ইমেজ মুছবেন?'))return;
   try{
     if(path&&storage){try{await storage.ref().child(path).delete()}catch(e){}}
     await db.collection(FS.images).doc(id).delete();
@@ -1078,305 +1333,359 @@ async function delImg(id,path){
 }
 
 // ══════════════════════════════════════════
-// HOOK INTO PAGE NAVIGATION (extend existing pageLoaders)
+// ACTIVITY LOGS
 // ══════════════════════════════════════════
-if(typeof pageLoaders==='object'){
-  pageLoaders.bulk=()=>{};
-  pageLoaders.storage=()=>loadImgTable();
-  pageLoaders.logs=()=>loadLogs();
-  var _origDash=pageLoaders.dashboard;
-  pageLoaders.dashboard=function(){_origDash&&_origDash();renderDashChart()};
+async function logAct(action,item){
+  if(!db||!currentAdmin)return;
+  try{await db.collection(FS.logs).add({action,item:item||'',uid:currentAdmin.uid,email:currentAdmin.email,name:currentAdmin.name,createdAt:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){}
 }
-if(typeof pageTitles==='object'){
-  pageTitles.bulk='ব্যাচ ইম্পোর্ট';pageTitles.storage='ইমেজ আপলোড';pageTitles.logs='অ্যাক্টিভিটি লগ';
+async function loadLogs(){
+  try{
+    var snap=await db.collection(FS.logs).orderBy('createdAt','desc').limit(100).get();
+    document.querySelector('#logsTable tbody').innerHTML=snap.empty
+      ?'<tr><td colspan="4" class="empty-row">কোনো লগ নেই</td></tr>'
+      :snap.docs.map(d=>{var l=d.data();var t=l.createdAt&&l.createdAt.toDate?l.createdAt.toDate().toLocaleString('bn-BD'):'—';return`<tr><td style="font-size:0.76rem;color:var(--muted);font-family:var(--font-m);white-space:nowrap">${t}</td><td style="font-size:0.82rem">${l.name||l.email||'?'}</td><td><span class="badge b-pending">${l.action}</span></td><td style="font-size:0.82rem;color:var(--muted)">${l.item||'—'}</td></tr>`}).join('');
+  }catch(e){toast('লগ লোড ব্যর্থ','err')}
+}
+async function exportLogs(){
+  try{
+    var snap=await db.collection(FS.logs).orderBy('createdAt','desc').limit(500).get();
+    const data=snap.docs.map(d=>{var l=d.data();return{time:l.createdAt&&l.createdAt.toDate?l.createdAt.toDate().toISOString():'',user:l.email,action:l.action,item:l.item}});
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='oxvin_logs_'+Date.now()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('লগ এক্সপোর্ট হচ্ছে','ok');
+  }catch(e){toast('এক্সপোর্ট ব্যর্থ','err')}
+}
+function confirmClearLogs(){
+  confirmDelete(clearLogs,'৭ দিনের পুরোনো সব লগ','মুছবেন?');
+  document.getElementById('confirmOkBtn').innerHTML='<i class="fas fa-trash"></i> হ্যাঁ, মুছুন';
+}
+async function clearLogs(){
+  try{
+    var cutoff=new Date(Date.now()-7*24*3600*1000);
+    var snap=await db.collection(FS.logs).where('createdAt','<',firebase.firestore.Timestamp.fromDate(cutoff)).get();
+    var batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();
+    toast(snap.size+' টি লগ মুছে গেছে','ok');loadLogs();
+  }catch(e){toast('মুছতে ব্যর্থ','err')}
 }
 
-// Re-bind newly-added sidebar buttons (the original loop ran before our HTML was injected? No, HTML was injected at parse time, so original loop covers them. But ensure):
+// ══════════════════════════════════════════
+// EXPORT & RESTORE
+// ══════════════════════════════════════════
+async function exportData(single){
+  try{
+    let data;
+    if(single){
+      var snap=await db.collection(FS[single]).get();
+      data={exportDate:new Date().toISOString(),[single]:snap.docs.map(d=>({id:d.id,...d.data()}))};
+    }else{
+      var [bs,ms,cs,rs]=await Promise.all([db.collection(FS.brands).get(),db.collection(FS.models).get(),db.collection(FS.contents).get(),db.collection(FS.requests).get()]);
+      data={exportDate:new Date().toISOString(),brands:bs.docs.map(d=>({id:d.id,...d.data()})),models:ms.docs.map(d=>({id:d.id,...d.data()})),contents:cs.docs.map(d=>({id:d.id,...d.data()})),requests:rs.docs.map(d=>({id:d.id,...d.data()}))};
+    }
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='oxvin_backup_'+(single||'all')+'_'+Date.now()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('ব্যাকআপ ডাউনলোড হচ্ছে','ok');logAct('export_data',single||'all');
+  }catch(e){toast('এক্সপোর্ট ব্যর্থ','err')}
+}
+function handleRestoreDrop(e){
+  e.preventDefault();document.getElementById('restoreDrop').classList.remove('drag-over');
+  var f=e.dataTransfer.files[0];if(f)doRestore(f);
+}
+async function doRestore(file){
+  if(!file)return;
+  var resEl=document.getElementById('restoreResult');
+  resEl.innerHTML='<div style="color:var(--muted);font-size:0.83rem">⏳ রিস্টোর হচ্ছে...</div>';
+  try{
+    var text=await file.text();
+    var data=JSON.parse(text);
+    var total=0,ok=0;
+    for(var col of['brands','models','contents','requests']){
+      if(!Array.isArray(data[col]))continue;
+      for(var item of data[col]){
+        total++;
+        try{
+          var id=item.id;delete item.id;
+          if(id)await db.collection(FS[col]).doc(id).set(item,{merge:true});
+          else await db.collection(FS[col]).add(item);
+          ok++;
+        }catch(e){}
+      }
+    }
+    resEl.innerHTML=`<div style="padding:10px;background:rgba(16,185,129,0.1);border-radius:7px;color:var(--green)">✅ ${ok} / ${total} আইটেম রিস্টোর সম্পন্ন</div>`;
+    toast('রিস্টোর সফল','ok');syncUser();loadAll();logAct('restore_data',ok+' items');
+  }catch(e){resEl.innerHTML=`<div style="padding:10px;background:rgba(244,63,94,0.1);border-radius:7px;color:var(--red)">❌ ${e.message}</div>`}
+}
+
+// ══════════════════════════════════════════
+// ADSENSE SETTINGS
+// ══════════════════════════════════════════
+let adsEnabled=false;
+async function loadAdsSettings(){
+  try{
+    var doc=await db.collection(FS.settings).doc('adsense').get();
+    if(doc.exists){
+      var d=doc.data();
+      adsEnabled=d.adsEnabled||false;
+      document.getElementById('adsClient').value=d.adClient||'';
+      document.getElementById('adsSlot').value=d.adSlot||'';
+      document.getElementById('adsHeaderSlot').value=d.headerSlot||'';
+      document.getElementById('adsArticleSlot').value=d.articleSlot||'';
+      updateAdsToggle();
+    }
+  }catch(e){}
+}
+function toggleAds(){adsEnabled=!adsEnabled;updateAdsToggle()}
+function updateAdsToggle(){
+  const t=document.getElementById('adsToggle');
+  const l=document.getElementById('adsToggleLabel');
+  if(adsEnabled){t.classList.add('on');l.textContent='চালু ✅';l.style.color='var(--green)'}
+  else{t.classList.remove('on');l.textContent='বন্ধ ❌';l.style.color='var(--muted)'}
+}
+async function saveAdsSettings(){
+  try{
+    await db.collection(FS.settings).doc('adsense').set({
+      adsEnabled,
+      adClient:document.getElementById('adsClient').value.trim(),
+      adSlot:document.getElementById('adsSlot').value.trim(),
+      headerSlot:document.getElementById('adsHeaderSlot').value.trim(),
+      articleSlot:document.getElementById('adsArticleSlot').value.trim(),
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('AdSense সেটিংস সেভ হয়েছে','ok');syncUser();logAct('save_adsense','');
+  }catch(e){toast('সেভ ব্যর্থ','err')}
+}
+
+// ══════════════════════════════════════════
+// SITE SETTINGS + TELEGRAM
+// ══════════════════════════════════════════
+async function loadSiteSettings(){
+  try{
+    var doc=await db.collection(FS.settings).doc('site').get();
+    if(doc.exists){
+      var d=doc.data();
+      document.getElementById('siteName').value=d.siteName||'OXVIN SMARTO';
+      document.getElementById('siteTagline').value=d.siteTagline||'';
+      document.getElementById('siteEmail').value=d.siteEmail||'';
+      document.getElementById('siteTelegram').value=d.siteTelegram||'';
+      document.getElementById('tgBotToken').value=d.tgBotToken||'';
+      document.getElementById('tgChatId').value=d.tgChatId||'';
+    }
+  }catch(e){}
+}
+async function saveSiteSettings(){
+  try{
+    await db.collection(FS.settings).doc('site').set({
+      siteName:document.getElementById('siteName').value.trim(),
+      siteTagline:document.getElementById('siteTagline').value.trim(),
+      siteEmail:document.getElementById('siteEmail').value.trim(),
+      siteTelegram:document.getElementById('siteTelegram').value.trim(),
+      tgBotToken:document.getElementById('tgBotToken').value.trim(),
+      tgChatId:document.getElementById('tgChatId').value.trim(),
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('সাইট সেটিংস সেভ হয়েছে','ok');syncUser();logAct('save_site_settings','');
+  }catch(e){toast('সেভ ব্যর্থ','err')}
+}
+async function notifyTelegram(msg){
+  try{
+    var doc=await db.collection(FS.settings).doc('site').get();
+    if(!doc.exists)return;
+    var d=doc.data();
+    if(!d.tgBotToken||!d.tgChatId)return;
+    // Use no-cors fetch (will fail silently if blocked by browser)
+    fetch(`https://api.telegram.org/bot${d.tgBotToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:d.tgChatId,text:'🔔 OXVIN SMARTO\n'+msg,parse_mode:'HTML'})}).catch(()=>{});
+  }catch(e){}
+}
+async function testTelegramBot(){
+  toast('টেস্ট মেসেজ পাঠানো হচ্ছে...','info');
+  await notifyTelegram('✅ টেলিগ্রাম বট কানেকশন সফল!\nOXVIN SMARTO Admin Panel থেকে।');
+  toast('টেস্ট পাঠানো হয়েছে (যদি বট সেটাপ সঠিক হয়)','ok');
+}
+
+// ══════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════
+let dashChartInst=null,brandChartInst=null;
+async function renderDashChart(){
+  if(typeof Chart==='undefined')return;
+  try{
+    var snap=await db.collection(FS.contents).get();
+    var cnt={schematic:0,testpoint:0,firmware:0,code:0,pinout:0,repair:0};
+    var brandCnt={};
+    snap.docs.forEach(d=>{
+      var dd=d.data();
+      var t=dd.type;if(cnt[t]!==undefined)cnt[t]++;
+      var b=dd.brandName||dd.brandId||'Other';brandCnt[b]=(brandCnt[b]||0)+1;
+    });
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const textColor=isDark?'#6b8aad':'#475569';
+    // Doughnut
+    var c1=document.getElementById('dashChart');
+    if(c1){
+      if(dashChartInst)dashChartInst.destroy();
+      dashChartInst=new Chart(c1.getContext('2d'),{type:'doughnut',data:{labels:['স্কিমেটিক্স','টেস্টপয়েন্ট','ফার্মওয়্যার','কোড','পিনআউট','রিপেয়ার'],datasets:[{data:[cnt.schematic,cnt.testpoint,cnt.firmware,cnt.code,cnt.pinout,cnt.repair],backgroundColor:['#00e5ff','#f59e0b','#10b981','#8b5cf6','#f97316','#f43f5e'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:textColor,font:{size:11}}}}}});
+    }
+    // Bar - brands
+    var c2=document.getElementById('brandChart');
+    if(c2){
+      const brands=Object.keys(brandCnt).slice(0,8);const vals=brands.map(b=>brandCnt[b]);
+      if(brandChartInst)brandChartInst.destroy();
+      brandChartInst=new Chart(c2.getContext('2d'),{type:'bar',data:{labels:brands,datasets:[{label:'কন্টেন্ট',data:vals,backgroundColor:'rgba(0,229,255,0.3)',borderColor:'#00e5ff',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:textColor},grid:{color:isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)'}},x:{ticks:{color:textColor},grid:{display:false}}}}});
+    }
+  }catch(e){console.warn('chart err',e)}
+}
+
+// ══════════════════════════════════════════
+// NOTIFICATION BELL
+// ══════════════════════════════════════════
+function startBellWatcher(){
+  if(!db)return;
+  try{
+    db.collection(FS.requests).where('status','==','pending').onSnapshot(snap=>{
+      var b=document.getElementById('bellDot');
+      var rb=document.getElementById('reqBadge');
+      if(snap.size>0){if(b)b.style.display='block';if(rb){rb.textContent=snap.size;rb.classList.remove('hidden')}}
+      else{if(b)b.style.display='none';if(rb)rb.classList.add('hidden')}
+    });
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+const pageLoaders={
+  dashboard:()=>{loadDashboard();renderDashChart()},
+  brands:()=>loadBrands(),
+  models:()=>loadModelsTable(document.getElementById('mFilter')?.value||''),
+  contents:()=>{loadModels().then(()=>{populateSelects();loadContentsTable()})},
+  requests:()=>loadRequestsTable(),
+  users:()=>loadUsersTable(),
+  notifications:()=>loadNotifTable(),
+  bulk:()=>{},
+  storage:()=>loadImgTable(),
+  logs:()=>loadLogs(),
+  adsense:()=>loadAdsSettings(),
+  settings:()=>loadSiteSettings()
+};
+const pageTitles={dashboard:'ড্যাশবোর্ড',brands:'ব্র্যান্ড ম্যানেজমেন্ট',models:'মডেল ম্যানেজমেন্ট',contents:'কন্টেন্ট ম্যানেজমেন্ট',requests:'ইউজার রিকোয়েস্ট',users:'ইউজার ম্যানেজমেন্ট',notifications:'নোটিফিকেশন সেন্টার',bulk:'ব্যাচ ইম্পোর্ট',storage:'ইমেজ আপলোড',logs:'অ্যাক্টিভিটি লগ',adsense:'AdSense সেটিংস',settings:'সিস্টেম সেটিংস'};
+
+async function loadModels(){
+  var snap=await db.collection(FS.models).get();
+  allModels=snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+function populateSelects(){
+  const sels=['mBrand','cBrand','cfBrand','mFilter'];
+  sels.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const isFilter=id.startsWith('cf')||id==='mFilter';
+    el.innerHTML=(isFilter?'<option value="">সব ব্র্যান্ড</option>':'')
+      +allBrands.map(b=>`<option value="${b.id}">${b.emoji||'📱'} ${b.name}</option>`).join('');
+  });
+  if(allBrands.length)loadCModelSel(allBrands[0].id);
+}
+function gotoPage(p){
+  const btn=document.querySelector(`.sb-btn[data-page="${p}"]`);if(btn)btn.click();
+}
+
 document.querySelectorAll('.sb-btn[data-page]').forEach(btn=>{
-  if(btn._oxBound)return;btn._oxBound=true;
   btn.addEventListener('click',function(){
-    var p=this.dataset.page;
+    const p=this.dataset.page;
     document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
     this.classList.add('active');
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-    var pg=document.getElementById(p+'Page');if(pg)pg.classList.add('active');
-    var tt=document.getElementById('topTitle');if(tt)tt.textContent=pageTitles[p]||p;
+    const pg=document.getElementById(p+'Page');if(pg)pg.classList.add('active');
+    document.getElementById('topTitle').textContent=pageTitles[p]||p;
     if(pageLoaders[p])pageLoaders[p]();
+    // close sidebar on mobile
+    if(window.innerWidth<=768)closeSidebar();
   });
 });
 
-// shortcut for bell click → switch to requests page
-function showPage_(p){var btn=document.querySelector('.sb-btn[data-page="'+p+'"]');if(btn)btn.click()}
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function syncUser(){
+  try{var ch=new BroadcastChannel('oxvin_sync');ch.postMessage({type:'data_updated',ts:Date.now()});ch.close()}catch(e){}
+}
 
-// Wrap mutation functions to log
-['addBrand','deleteBrand','addModel','deleteModel','addContent','saveEdit','delContent','updateReq','delReq'].forEach(fn=>{
-  if(typeof window[fn]==='function'){
-    var orig=window[fn];
-    window[fn]=async function(){
-      try{await orig.apply(this,arguments);logAct(fn,Array.from(arguments).join(' / '))}
-      catch(e){throw e}
-    };
-  }
+// ══════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+});
+// Confirm delete modal
+function confirmDelete(fn,item,msg){
+  _confirmFn=fn;
+  document.getElementById('confirmMsg').textContent=msg||'এটি মুছবেন?';
+  document.getElementById('confirmItem').textContent=item||'';
+  document.getElementById('confirmIcon').textContent='🗑️';
+  openModal('confirmModal');
+}
+function execConfirm(){closeModal('confirmModal');if(_confirmFn){_confirmFn();_confirmFn=null}}
+
+// ══════════════════════════════════════════
+// THEME + LANG
+// ══════════════════════════════════════════
+window.toggleTheme=function(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var nxt=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',nxt);
+  try{localStorage.setItem('oxvin_theme',nxt)}catch(e){}
+  var b=document.getElementById('themeBtn');if(b)b.textContent=nxt==='dark'?'☀️':'🌙';
+  setTimeout(()=>renderDashChart(),100);
+};
+window.toggleLang=function(){
+  var cur=document.documentElement.getAttribute('data-lang')||'bn';
+  var nxt=cur==='bn'?'en':'bn';
+  document.documentElement.setAttribute('data-lang',nxt);
+  try{localStorage.setItem('oxvin_lang',nxt)}catch(e){}
+  var b=document.getElementById('langBtn');if(b)b.textContent=nxt==='bn'?'EN':'বাং';
+};
+document.addEventListener('DOMContentLoaded',function(){
+  var t=document.getElementById('themeBtn');
+  if(t)t.textContent=(document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'☀️':'🌙';
+  var l=document.getElementById('langBtn');
+  if(l)l.textContent=(document.documentElement.getAttribute('data-lang')||'bn')==='bn'?'EN':'বাং';
 });
 
-// Start bell watcher when admin loaded
-var _origCheck=window.checkAccess;
-window.checkAccess=async function(u){await _origCheck(u);startBellWatcher();renderDashChart()};
+// ══════════════════════════════════════════
+// MOBILE SIDEBAR
+// ══════════════════════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebarEl');
+  const ov=document.getElementById('sidebarOverlay');
+  sb.classList.toggle('show');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebarEl').classList.remove('show');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
 
 // ══════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════
 function toast(msg,type='info'){
-  const icons={ok:'✅',err:'❌',info:'ℹ️'};
+  const icons={ok:'✅',err:'❌',info:'ℹ️',warn:'⚠️'};
   const w=document.getElementById('toastWrap');
   const el=document.createElement('div');
   el.className=`toast ${type}`;
-  el.innerHTML=`<span>${icons[type]}</span><span>${msg}</span>`;
+  el.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
   w.appendChild(el);
   setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(14px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300)},4000);
 }
 
-
-// ═══════════════ UPGRADE PACK (admin) ═══════════════
-// FIX #6: Admin search across models
-async function adminSearch(){
-  var q=(document.getElementById('adminSearch').value||'').trim().toLowerCase();
-  var brand=document.getElementById('mFilter').value||'';
-  if(!q){return loadModelsTable(brand)}
-  try{
-    var snap=brand?await db.collection(FS.models).where('brandId','==',brand).get():await db.collection(FS.models).get();
-    var res=snap.docs.map(function(d){return Object.assign({id:d.id},d.data())})
-      .filter(function(m){return (m.name||'').toLowerCase().includes(q)||(m.specs||'').toLowerCase().includes(q)});
-    var tb=document.querySelector('#modelsTable tbody');
-    if(!tb)return;
-    if(!res.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">কিছু পাওয়া যায়নি</td></tr>';return}
-    tb.innerHTML=res.map(function(m){
-      return '<tr><td><input type="checkbox" class="model-chk" data-id="'+m.id+'" onchange="toggleSelectModel(\''+m.id+'\')"></td><td>'+(m.name||'—')+'</td><td>'+(m.specs||'—')+'</td><td>'+(m.brandId||'')+' <button class="btn btn-red btn-sm" onclick="deleteModel(\''+m.id+'\',\''+(m.name||'').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>';
-    }).join('');
-  }catch(e){console.error(e);toast('সার্চ ব্যর্থ','err')}
-}
-
-// FIX #8: Bulk select / delete
-window.selectedModels=window.selectedModels||new Set();
-function toggleSelectModel(id){
-  if(selectedModels.has(id))selectedModels.delete(id);else selectedModels.add(id);
-  var el=document.getElementById('selectedCount');
-  var bar=document.getElementById('bulkBar');
-  if(el)el.textContent=selectedModels.size+'টি সিলেক্টেড';
-  if(bar)bar.style.display=selectedModels.size?'flex':'none';
-}
-function clearSelection(){
-  selectedModels.clear();
-  document.querySelectorAll('.model-chk').forEach(function(c){c.checked=false});
-  var bar=document.getElementById('bulkBar');if(bar)bar.style.display='none';
-}
-async function bulkDeleteModels(){
-  if(!selectedModels.size){toast('কিছু সিলেক্ট করুন','err');return}
-  var ok=await showConfirmModal(selectedModels.size+'টি মডেল ডিলিট হবে। নিশ্চিত?','বাল্ক ডিলিট');
-  if(!ok)return;
-  var batch=db.batch();
-  selectedModels.forEach(function(id){batch.delete(db.collection(FS.models).doc(id))});
-  try{await batch.commit();toast(selectedModels.size+'টি মডেল মুছে গেছে','ok');selectedModels.clear();
-    var bar=document.getElementById('bulkBar');if(bar)bar.style.display='none';
-    await loadModelsTable(document.getElementById('mFilter').value);syncUser()}
-  catch(e){toast('বাল্ক ডিলিট ব্যর্থ','err')}
-}
-
-// FIX #10: Notification sound
-window._notifPrev=0;
-function playNotificationSound(){
-  try{
-    var ctx=new (window.AudioContext||window.webkitAudioContext)();
-    var o=ctx.createOscillator();var g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    o.type='sine';o.frequency.value=880;
-    g.gain.setValueAtTime(0.0001,ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.2,ctx.currentTime+0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.4);
-    o.start();o.stop(ctx.currentTime+0.4);
-  }catch(e){}
-}
-
-// FIX #14: PDF report (print-based)
-async function generateReport(){
-  try{
-    var snap=await db.collection(FS.contents).get();
-    var rows=snap.docs.map(function(d){return Object.assign({id:d.id},d.data())});
-    var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>OXVIN রিপোর্ট</title>'+
-      '<style>body{font-family:sans-serif;padding:30px;color:#222}h1{color:#00b8d4;border-bottom:2px solid #00e5ff;padding-bottom:8px}'+
-      'table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:10px;border:1px solid #ddd;text-align:left;font-size:13px}'+
-      'th{background:#0d1120;color:#00e5ff}.meta{color:#666;font-size:12px;margin:8px 0 20px}</style></head><body>'+
-      '<h1>OXVIN SMARTO — কন্টেন্ট রিপোর্ট</h1>'+
-      '<div class="meta">তৈরি: '+new Date().toLocaleString('bn-BD')+' • মোট: '+rows.length+'টি</div>'+
-      '<table><thead><tr><th>#</th><th>শিরোনাম</th><th>টাইপ</th><th>ডাউনলোড</th></tr></thead><tbody>'+
-      rows.map(function(r,i){return '<tr><td>'+(i+1)+'</td><td>'+(r.title||'—')+'</td><td>'+(r.type||'—')+'</td><td>'+(r.downloadCount||0)+'</td></tr>'}).join('')+
-      '</tbody></table>
-<button id="scrollTopBtn" data-tooltip="উপরে যান" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
-<script>
-// ── Scroll-to-top ──
-window.addEventListener('scroll',function(){
-  var b=document.getElementById('scrollTopBtn');
-  if(b)b.style.display=window.scrollY>300?'flex':'none';
-},{passive:true});
-
-// ── Custom confirm modal ──
-window.showConfirmModal=function(msg,title){
-  return new Promise(function(resolve){
-    var m=document.createElement('div');m.className='confirm-modal-bg';
-    m.innerHTML='<div class="confirm-modal"><h3>'+(title||'নিশ্চিত?')+'</h3><p>'+msg+'</p><div class="row"><button class="no">বাতিল</button><button class="ok">নিশ্চিত</button></div></div>';
-    document.body.appendChild(m);
-    m.querySelector('.ok').onclick=function(){m.remove();resolve(true)};
-    m.querySelector('.no').onclick=function(){m.remove();resolve(false)};
-    m.addEventListener('click',function(e){if(e.target===m){m.remove();resolve(false)}});
-  });
-};
-
-// ── Rate limit helper ──
-window._lastReq=0;
-window.rateLimit=function(ms){
-  ms=ms||800;
-  if(Date.now()-window._lastReq<ms)return false;
-  window._lastReq=Date.now();return true;
-};
-
-// ── CSV export helper ──
-window.exportToCSV=function(rows,filename){
-  if(!rows||!rows.length)return;
-  var keys=Object.keys(rows[0]);
-  var csv=keys.join(',')+'\n'+rows.map(function(r){
-    return keys.map(function(k){
-      var v=r[k]==null?'':String(r[k]).replace(/"/g,'""');
-      return /[",\n]/.test(v)?'"'+v+'"':v;
-    }).join(',');
-  }).join('\n');
-  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename||'export.csv';a.click();
-  setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
-};
-
-// ── Default theme: respect system preference ──
-(function(){
-  if(!localStorage.getItem('oxvin_theme')){
-    var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if(!prefersDark)document.documentElement.setAttribute('data-theme','light');
+// Keyboard shortcut: / = focus search
+document.addEventListener('keydown',function(e){
+  if(e.key==='/'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){
+    e.preventDefault();
+    const activePage=document.querySelector('.page.active');
+    const searchInput=activePage?activePage.querySelector('input[type="text"]'):null;
+    if(searchInput)searchInput.focus();
   }
-})();
-</script>
-</body></html>';
-    var w=window.open('','_blank');w.document.write(html);w.document.close();
-    setTimeout(function(){w.print()},400);
-  }catch(e){toast('রিপোর্ট ব্যর্থ','err')}
-}
-
-// FIX #30: CSV export for models
-async function exportModelsCSV(){
-  try{
-    var snap=await db.collection(FS.models).get();
-    var rows=snap.docs.map(function(d){var x=d.data();return {id:d.id,name:x.name||'',specs:x.specs||'',brandId:x.brandId||''}});
-    if(!rows.length){toast('কোনো ডেটা নেই','err');return}
-    exportToCSV(rows,'oxvin_models_'+Date.now()+'.csv');
-    toast('CSV ডাউনলোড হয়েছে','ok');
-  }catch(e){toast('এক্সপোর্ট ব্যর্থ','err')}
-}
-
-// FIX #15: Image compression before upload
-async function compressImage(file,maxW,quality){
-  maxW=maxW||1280;quality=quality||0.75;
-  if(!file||!file.type||!file.type.startsWith('image/'))return file;
-  return new Promise(function(resolve){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      var img=new Image();
-      img.onload=function(){
-        var w=img.width,h=img.height;
-        if(w>maxW){h=Math.round(h*maxW/w);w=maxW}
-        var c=document.createElement('canvas');c.width=w;c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        c.toBlob(function(blob){resolve(blob||file)},'image/jpeg',quality);
-      };
-      img.onerror=function(){resolve(file)};
-      img.src=e.target.result;
-    };
-    reader.onerror=function(){resolve(file)};
-    reader.readAsDataURL(file);
-  });
-}
-
-// FIX #31: Activity log
-async function logUserActivity(action,item){
-  try{
-    if(!auth||!auth.currentUser)return;
-    await db.collection('oxvin_logs').add({
-      uid:auth.currentUser.uid,email:auth.currentUser.email||'',
-      action:action,item:item||'',
-      timestamp:firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }catch(e){}
-}
-
-// Hook: play sound when new request arrives
-(function(){
-  if(typeof loadReqBadge!=='function')return;
-  var _orig=loadReqBadge;
-  window.loadReqBadge=async function(){
-    try{
-      var snap=await db.collection(FS.requests).where('status','==','pending').get();
-      if(snap.size>window._notifPrev&&window._notifPrev>0)playNotificationSound();
-      window._notifPrev=snap.size;
-    }catch(e){}
-    return _orig.apply(this,arguments);
-  };
-})();
-
-// Hook: compress images automatically inside doImgUpload
-(function(){
-  if(typeof doImgUpload!=='function')return;
-  var _orig=doImgUpload;
-  window.doImgUpload=async function(){
-    var inp=document.getElementById('imgFile');
-    if(inp&&inp.files&&inp.files[0]){
-      try{
-        var compressed=await compressImage(inp.files[0]);
-        if(compressed&&compressed.size<inp.files[0].size){
-          var dt=new DataTransfer();
-          dt.items.add(new File([compressed],inp.files[0].name.replace(/\.\w+$/,'.jpg'),{type:'image/jpeg'}));
-          inp.files=dt.files;
-        }
-      }catch(e){}
-    }
-    return _orig.apply(this,arguments);
-  };
-})();
-
-// FIX #9: Better dashboard chart (only if Chart.js + canvas exist)
-(function(){
-  if(typeof renderDashChart!=='function')return;
-  window.renderDashChart=async function(){
-    try{
-      var el=document.getElementById('dashChart');if(!el||!window.Chart)return;
-      var snap=await db.collection(FS.contents).get();
-      var cnt={schematic:0,testpoint:0,firmware:0,code:0};
-      snap.docs.forEach(function(d){var t=d.data().type;if(cnt[t]!==undefined)cnt[t]++});
-      if(window._dashChart)window._dashChart.destroy();
-      window._dashChart=new Chart(el,{type:'bar',
-        data:{labels:['স্কিমেটিক্স','টেস্টপয়েন্ট','ফার্মওয়্যার','কোড'],
-          datasets:[{label:'কন্টেন্ট সংখ্যা',data:[cnt.schematic,cnt.testpoint,cnt.firmware,cnt.code],
-            backgroundColor:['#00e5ff','#f59e0b','#10b981','#8b5cf6'],borderRadius:6}]},
-        options:{responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{position:'bottom',labels:{color:'#e2eeff'}}},
-          scales:{y:{ticks:{color:'#6b8aad'},grid:{color:'#1a2236'}},x:{ticks:{color:'#6b8aad'},grid:{display:false}}}}});
-    }catch(e){console.warn('dash chart',e)}
-  };
-})();
-
-// Log admin actions
-['addBrand','deleteBrand','addModel','deleteModel','addContent','saveEdit','delContent','updateReq','delReq','bulkDeleteModels'].forEach(function(fn){
-  if(typeof window[fn]==='function'){
-    var _o=window[fn];
-    window[fn]=async function(){var r=await _o.apply(this,arguments);logUserActivity(fn,Array.from(arguments).join(',').slice(0,80));return r}
-  }
+  if(e.key==='Escape'){document.querySelectorAll('.modal-bg.show').forEach(m=>m.classList.remove('show'))}
 });
-
 </script>
 </body>
 </html>
