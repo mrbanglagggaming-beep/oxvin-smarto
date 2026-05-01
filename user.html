@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OXVIN SMARTO — মোবাইল রিপেয়ার ডেটাবেস</title>
 <meta name="description" content="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস — স্কিমেটিক্স, টেস্টপয়েন্ট, ফার্মওয়্যার, ট্রাবলশুট">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer-when-downgrade">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tiro+Bangla&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -343,6 +344,30 @@ html[data-lang="bn"] [data-en]{display:none}
 .zoom-img{max-width:100%;cursor:zoom-in;border-radius:8px}
 @media print{.nav,.brand-bar,.breadcrumb,.stats-bar,.footer,.toast-wrap,.fav-btn,.dl-btn,#contentTabs,.empty-btn{display:none!important}.page{display:block!important}.content-item{break-inside:avoid;border:1px solid #ccc!important;background:#fff!important;color:#000!important}}
 
+
+/* ── Added by upgrade pack ── */
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-family:var(--font-m,monospace);white-space:nowrap;z-index:9999;pointer-events:none}
+.skeleton{background:linear-gradient(90deg,var(--card,#101522) 0%,var(--card2,#141a28) 50%,var(--card,#101522) 100%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#scrollTopBtn{position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cyan,#00e5ff);color:#000;border:none;font-size:20px;cursor:pointer;display:none;z-index:999;box-shadow:0 6px 20px rgba(0,229,255,.3);transition:transform .2s}
+#scrollTopBtn:hover{transform:translateY(-3px)}
+.confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:99999;animation:fadeIn .2s}
+.confirm-modal{background:var(--card,#101522);border:1px solid var(--border2,#1e2840);border-radius:14px;padding:24px;max-width:380px;width:90%;text-align:center}
+.confirm-modal h3{font-family:var(--font-d,sans-serif);font-size:1.3rem;letter-spacing:2px;color:var(--cyan,#00e5ff);margin-bottom:10px}
+.confirm-modal p{color:var(--text,#e2eeff);margin-bottom:20px;font-size:.95rem}
+.confirm-modal .row{display:flex;gap:10px;justify-content:center}
+.confirm-modal button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font-m,monospace);font-size:.85rem;letter-spacing:1px}
+.confirm-modal .ok{background:var(--red,#f43f5e);color:#fff}
+.confirm-modal .no{background:var(--card2,#141a28);color:var(--text,#e2eeff);border:1px solid var(--border2,#1e2840)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+html[data-theme="light"] .ci-icon,html[data-theme="light"] img.ci-icon{filter:brightness(.95)}
+html[data-theme="dark"] .ci-icon,html[data-theme="dark"] img.ci-icon{filter:brightness(1.1)}
+img[loading]{transition:opacity .3s}
+.bulk-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--cyan3,rgba(0,229,255,.08));border:1px solid rgba(0,229,255,.2);border-radius:8px;margin-bottom:10px;font-size:.85rem;font-family:var(--font-m,monospace)}
+.bulk-bar .count{color:var(--cyan,#00e5ff);font-weight:700}
+.bulk-bar button{padding:6px 14px;border:none;border-radius:6px;background:var(--red,#f43f5e);color:#fff;cursor:pointer;font-size:.8rem;font-family:var(--font-m,monospace)}
+.bulk-bar button:disabled{opacity:.4;cursor:not-allowed}
 </style>
 
 <!-- SEO -->
@@ -555,7 +580,7 @@ let db,fbReady=false;
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
       db=firebase.firestore();try{auth=firebase.auth();auth.onAuthStateChanged(u=>{currentUser=u;renderUserArea();if(u){loadFavorites()}});}catch(e){}
-      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db.settings({ignoreUndefinedProperties:true});
       fbReady=true;
       console.log('[OXVIN] Firebase ready ✅');
       onReady();
@@ -1104,6 +1129,145 @@ function toast(msg,type='info'){
   w.appendChild(el);
   setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(16px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300)},3500);
 }
+
+
+// ═══════════════ UPGRADE PACK (user) ═══════════════
+
+// FIX #12: Password reset
+async function resetPassword(){
+  var email=prompt('আপনার রেজিস্টার্ড ইমেইল দিন:');
+  if(!email)return;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('ইমেইল ফরম্যাট ভুল','err');return}
+  try{
+    await auth.sendPasswordResetEmail(email);
+    toast('রিসেট লিংক পাঠানো হয়েছে — ইমেইল চেক করুন','ok');
+  }catch(e){
+    var msg={'auth/user-not-found':'এই ইমেইল রেজিস্টার্ড না','auth/invalid-email':'ইমেইল ভুল','auth/network-request-failed':'নেটওয়ার্ক সমস্যা'}[e.code]||e.message;
+    toast(msg,'err');
+  }
+}
+
+// FIX #13: Social share / copy link
+function shareContent(title,url){
+  var u=url||location.href;var t=title||document.title;
+  if(navigator.share){
+    navigator.share({title:t,url:u}).catch(function(){});
+  }else{
+    navigator.clipboard.writeText(u).then(function(){toast('লিংক কপি হয়েছে','ok')})
+      .catch(function(){prompt('কপি করুন:',u)});
+  }
+}
+
+// FIX #29: Trending content (top downloads)
+async function loadTrending(targetId){
+  targetId=targetId||'trendingGrid';
+  var grid=document.getElementById(targetId);if(!grid)return;
+  grid.innerHTML='<div class="skeleton" style="height:100px"></div><div class="skeleton" style="height:100px"></div><div class="skeleton" style="height:100px"></div>';
+  try{
+    var snap=await db.collection(FS.contents).orderBy('downloadCount','desc').limit(6).get();
+    var items=snap.docs.map(function(d){return Object.assign({id:d.id},d.data())}).filter(function(c){return (c.downloadCount||0)>0});
+    if(!items.length){grid.innerHTML='<div class="empty"><i class="fas fa-fire"></i><h3>এখনো ট্রেন্ডিং নেই</h3></div>';return}
+    grid.innerHTML=items.map(function(c){
+      return '<div class="content-card"><div class="cc-head"><i class="fas fa-fire" style="color:var(--amber)"></i> '+(c.title||'—')+'</div>'+
+        '<div class="cc-meta">'+(c.type||'')+' • <i class="fas fa-download"></i> '+(c.downloadCount||0)+'</div>'+
+        (c.url?'<a class="btn btn-cyan btn-sm" href="'+c.url+'" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> খুলুন</a>':'')+
+        ' <button class="btn btn-sm" onclick="shareContent(\''+(c.title||'').replace(/\x27/g,"\\x27")+'\',\''+(c.url||'').replace(/\x27/g,"\\x27")+'\')"><i class="fas fa-share"></i></button>'+
+        '</div>';
+    }).join('');
+  }catch(e){grid.innerHTML='<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>লোড ব্যর্থ</h3></div>'}
+}
+
+// FIX #11: Profile drawer (call openProfile())
+function openProfile(){
+  if(!currentUser){if(typeof openLogin==='function')openLogin();return}
+  var existing=document.getElementById('profileModal');
+  if(existing)existing.remove();
+  var d=new Date(currentUser.metadata&&currentUser.metadata.creationTime||Date.now());
+  var html='<div id="profileModal" class="modal-bg show" onclick="if(event.target===this)this.remove()">'+
+    '<div class="modal" style="max-width:400px">'+
+    '<div class="modal-head"><h3><i class="fas fa-user-circle"></i> আমার প্রোফাইল</h3>'+
+    '<button class="modal-close" onclick="document.getElementById(\'profileModal\').remove()">&times;</button></div>'+
+    '<div class="modal-body">'+
+    '<div style="text-align:center;margin-bottom:20px">'+
+    (currentUser.photoURL?'<img src="'+currentUser.photoURL+'" style="width:80px;height:80px;border-radius:50%;border:2px solid var(--cyan)">':'<i class="fas fa-user-circle" style="font-size:80px;color:var(--cyan)"></i>')+
+    '</div>'+
+    '<div class="lf"><label>নাম</label><div style="padding:10px;background:var(--card2);border-radius:8px">'+(currentUser.displayName||'—')+'</div></div>'+
+    '<div class="lf"><label>ইমেইল</label><div style="padding:10px;background:var(--card2);border-radius:8px;word-break:break-all">'+(currentUser.email||'—')+'</div></div>'+
+    '<div class="lf"><label>মেম্বার সিন্স</label><div style="padding:10px;background:var(--card2);border-radius:8px">'+d.toLocaleDateString('bn-BD')+'</div></div>'+
+    '<button class="btn btn-red" style="width:100%;margin-top:10px" onclick="auth.signOut();document.getElementById(\'profileModal\').remove()"><i class="fas fa-sign-out-alt"></i> লগআউট</button>'+
+    '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+window.openProfile=openProfile;
+
+// FIX #24: Lazy-loading on all dynamically rendered images (observer)
+(function(){
+  var io=new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType!==1)return;
+        n.querySelectorAll&&n.querySelectorAll('img:not([loading])').forEach(function(img){
+          img.setAttribute('loading','lazy');img.setAttribute('decoding','async');
+        });
+        if(n.tagName==='IMG'&&!n.hasAttribute('loading')){n.setAttribute('loading','lazy');n.setAttribute('decoding','async')}
+      });
+    });
+  });
+  io.observe(document.body,{childList:true,subtree:true});
+})();
+
+</script>
+
+<button id="scrollTopBtn" data-tooltip="উপরে যান" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+// ── Scroll-to-top ──
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.style.display=window.scrollY>300?'flex':'none';
+},{passive:true});
+
+// ── Custom confirm modal ──
+window.showConfirmModal=function(msg,title){
+  return new Promise(function(resolve){
+    var m=document.createElement('div');m.className='confirm-modal-bg';
+    m.innerHTML='<div class="confirm-modal"><h3>'+(title||'নিশ্চিত?')+'</h3><p>'+msg+'</p><div class="row"><button class="no">বাতিল</button><button class="ok">নিশ্চিত</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('.ok').onclick=function(){m.remove();resolve(true)};
+    m.querySelector('.no').onclick=function(){m.remove();resolve(false)};
+    m.addEventListener('click',function(e){if(e.target===m){m.remove();resolve(false)}});
+  });
+};
+
+// ── Rate limit helper ──
+window._lastReq=0;
+window.rateLimit=function(ms){
+  ms=ms||800;
+  if(Date.now()-window._lastReq<ms)return false;
+  window._lastReq=Date.now();return true;
+};
+
+// ── CSV export helper ──
+window.exportToCSV=function(rows,filename){
+  if(!rows||!rows.length)return;
+  var keys=Object.keys(rows[0]);
+  var csv=keys.join(',')+'\n'+rows.map(function(r){
+    return keys.map(function(k){
+      var v=r[k]==null?'':String(r[k]).replace(/"/g,'""');
+      return /[",\n]/.test(v)?'"'+v+'"':v;
+    }).join(',');
+  }).join('\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename||'export.csv';a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+};
+
+// ── Default theme: respect system preference ──
+(function(){
+  if(!localStorage.getItem('oxvin_theme')){
+    var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if(!prefersDark)document.documentElement.setAttribute('data-theme','light');
+  }
+})();
 </script>
 </body>
 </html>
