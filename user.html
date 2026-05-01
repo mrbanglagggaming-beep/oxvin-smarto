@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OXVIN SMARTO — মোবাইল রিপেয়ার ডেটাবেস</title>
 <meta name="description" content="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস — স্কিমেটিক্স, টেস্টপয়েন্ট, ফার্মওয়্যার, ট্রাবলশুট">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tiro+Bangla&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -553,7 +555,7 @@ let db,fbReady=false;
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
       db=firebase.firestore();try{auth=firebase.auth();auth.onAuthStateChanged(u=>{currentUser=u;renderUserArea();if(u){loadFavorites()}});}catch(e){}
-      db.settings({experimentalForceLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
       fbReady=true;
       console.log('[OXVIN] Firebase ready ✅');
       onReady();
