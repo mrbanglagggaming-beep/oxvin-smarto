@@ -45,6 +45,22 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
+
+/* ─── ADMIN-CONNECTED EXTRAS ─── */
+.notice-banner{position:sticky;top:64px;z-index:999;background:linear-gradient(90deg,rgba(0,229,255,0.15),rgba(139,92,246,0.15));border-bottom:1px solid rgba(0,229,255,0.3);padding:10px 20px;text-align:center;font-size:14px;color:var(--text);display:none;animation:slideDown .3s ease}
+.notice-banner.show{display:block}
+.notice-banner .nx{margin-left:12px;cursor:pointer;opacity:.6;font-size:18px;background:none;border:none;color:var(--text)}
+.notice-banner.warning{background:linear-gradient(90deg,rgba(245,158,11,0.18),rgba(244,63,94,0.18));border-color:rgba(245,158,11,0.4)}
+.notice-banner.success{background:linear-gradient(90deg,rgba(16,185,129,0.18),rgba(0,229,255,0.12));border-color:rgba(16,185,129,0.4)}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.admin-link{background:linear-gradient(135deg,#8b5cf6,#00b8d4)!important;color:#fff!important;font-weight:700;padding:6px 14px!important;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+.admin-link:hover{box-shadow:0 0 18px rgba(139,92,246,0.5)}
+.maint-overlay{position:fixed;inset:0;z-index:99999;background:rgba(6,8,15,0.96);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+.maint-overlay .mbox{max-width:480px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px}
+.maint-overlay h2{font-family:var(--font-display);font-size:36px;color:var(--cyan);margin-bottom:12px}
+.maint-overlay p{color:var(--muted)}
+.banned-overlay{position:fixed;inset:0;z-index:99999;background:rgba(244,63,94,0.95);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#fff}
+
 /* ─── NAVBAR ─── */
 .nav{
   position:sticky;top:0;z-index:1000;
@@ -399,6 +415,12 @@ img[loading]{transition:opacity .3s}
 </head>
 <body>
 
+<!-- LIVE NOTIFICATION BANNER (from admin) -->
+<div id="noticeBanner" class="notice-banner">
+  <span id="noticeText"></span>
+  <button class="nx" onclick="dismissNotice()">×</button>
+</div>
+
 <!-- NAV -->
 <nav class="nav">
   <div class="nav-logo" onclick="goHome()">
@@ -569,7 +591,10 @@ const FC = {
   appId:"1:607560575581:web:abf88c2b09d6ee56ddfbb4",
   measurementId:"G-JZWM2R8QYZ"
 };
-const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests',reviews:'oxvin_reviews',favorites:'oxvin_favorites'};
+const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests',reviews:'oxvin_reviews',favorites:'oxvin_favorites',notifications:'oxvin_notifications',settings:'oxvin_settings',users:'oxvin_users',logs:'oxvin_logs'};
+const MASTER_UID='ncsMmnyh6Kaf0liUs9XDJnxuMac2';
+const MASTER_EMAIL='serfwerf59@gmail.com';
+let isAdmin=false,isMaster=false,siteSettings={},adsSettings={};
 let auth=null,currentUser=null;
 
 let db,fbReady=false;
@@ -1268,6 +1293,196 @@ window.exportToCSV=function(rows,filename){
     if(!prefersDark)document.documentElement.setAttribute('data-theme','light');
   }
 })();
+</script>
+<script>
+
+// ══════════════════════════════════════════
+// ADMIN-CONNECTED FEATURES
+// ══════════════════════════════════════════
+
+// ─── Activity log helper ───
+async function logAct(action, item){
+  if(!fbReady||!currentUser)return;
+  try{
+    await db.collection(FS.logs).add({
+      action, item:item||'', uid:currentUser.uid, email:currentUser.email||'',
+      name:currentUser.displayName||'', source:'user_site',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){}
+}
+
+// ─── User profile sync + ban/admin role check ───
+async function syncUserProfile(u){
+  if(!fbReady||!u)return;
+  isMaster = (u.uid===MASTER_UID || u.email===MASTER_EMAIL);
+  try{
+    const ref = db.collection(FS.users).doc(u.uid);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({
+        uid:u.uid, name:u.displayName||'', email:u.email||'',
+        photoURL:u.photoURL||'',
+        role: isMaster?'master':'user',
+        banned:false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      isAdmin = isMaster;
+    }else{
+      const d = snap.data()||{};
+      isAdmin = isMaster || d.role==='admin' || d.role==='master';
+      if(d.banned){ showBannedOverlay(); return; }
+      try{ await ref.update({lastLogin: firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){}
+    }
+    renderAdminLink();
+  }catch(e){console.warn('user sync',e)}
+}
+
+function showBannedOverlay(){
+  document.body.innerHTML = '<div class="banned-overlay"><div><h1 style="font-family:var(--font-display);font-size:48px">🚫 ACCESS DENIED</h1><p style="font-size:18px;margin-top:12px">আপনার অ্যাকাউন্ট স্থগিত করা হয়েছে।</p><p style="opacity:.8;margin-top:8px">যোগাযোগ: '+ (siteSettings.contact||'admin@oxvin.com') +'</p></div></div>';
+}
+
+function renderAdminLink(){
+  const ua = document.getElementById('userArea');
+  if(!ua) return;
+  const existing = document.getElementById('adminPanelBtn');
+  if(existing) existing.remove();
+  if(isAdmin){
+    const a = document.createElement('a');
+    a.id = 'adminPanelBtn';
+    a.href = 'admin.html';
+    a.className = 'nav-btn admin-link';
+    a.target = '_blank';
+    a.innerHTML = '<i class="fas fa-shield-alt"></i> এডমিন';
+    ua.parentNode.insertBefore(a, ua);
+  }
+}
+
+// ─── Live notifications from admin ───
+let dismissedNotices = JSON.parse(localStorage.getItem('oxvin_dismissed_notices')||'[]');
+function dismissNotice(){
+  const b = document.getElementById('noticeBanner');
+  const id = b.dataset.noticeId;
+  if(id){ dismissedNotices.push(id); localStorage.setItem('oxvin_dismissed_notices', JSON.stringify(dismissedNotices.slice(-50))); }
+  b.classList.remove('show');
+}
+function listenNotifications(){
+  if(!fbReady)return;
+  try{
+    db.collection(FS.notifications).where('active','==',true)
+      .onSnapshot(snap=>{
+        const now = Date.now();
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .filter(n => !n.expiresAt || (n.expiresAt.toDate && n.expiresAt.toDate().getTime() > now))
+          .filter(n => !dismissedNotices.includes(n.id))
+          .sort((a,b)=>(b.createdAt?.toDate?.()?.getTime()||0) - (a.createdAt?.toDate?.()?.getTime()||0));
+        const top = docs[0];
+        const bn = document.getElementById('noticeBanner');
+        if(top){
+          document.getElementById('noticeText').innerHTML = '<b>📢 '+ (top.title||'') +'</b> &nbsp; '+ (top.body||'');
+          bn.className = 'notice-banner show ' + (top.type||'info');
+          bn.dataset.noticeId = top.id;
+        }else{
+          bn.classList.remove('show');
+        }
+      });
+  }catch(e){console.warn('notifications listener',e)}
+}
+
+// ─── Site settings + maintenance mode ───
+async function loadSiteSettings(){
+  if(!fbReady)return;
+  try{
+    const s = await db.collection(FS.settings).doc('site').get();
+    if(s.exists){
+      siteSettings = s.data()||{};
+      if(siteSettings.siteName){
+        document.title = siteSettings.siteName + ' — মোবাইল রিপেয়ার ডেটাবেস';
+      }
+      if(siteSettings.maintenance && !isAdmin){
+        showMaintenanceOverlay();
+      }
+    }
+  }catch(e){}
+  try{
+    const a = await db.collection(FS.settings).doc('adsense').get();
+    if(a.exists){
+      adsSettings = a.data()||{};
+      injectAdsense();
+    }
+  }catch(e){}
+}
+
+function showMaintenanceOverlay(){
+  const div = document.createElement('div');
+  div.className = 'maint-overlay';
+  div.innerHTML = '<div class="mbox"><h2>🔧 মেইনটেনেন্স মোড</h2><p>'+ (siteSettings.description || 'সাইটটি বর্তমানে আপডেট হচ্ছে। শীঘ্রই ফিরে আসছি!') +'</p>'+ (siteSettings.contact?'<p style="margin-top:16px;color:var(--cyan)">যোগাযোগ: '+siteSettings.contact+'</p>':'') +'</div></div>';
+  document.body.appendChild(div);
+}
+
+function injectAdsense(){
+  if(!adsSettings.enabled || !adsSettings.clientId) return;
+  if(document.getElementById('adsense-script')) return;
+  const s = document.createElement('script');
+  s.id = 'adsense-script';
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + adsSettings.clientId;
+  document.head.appendChild(s);
+}
+
+// ─── Hook into auth changes (extends existing onAuthStateChanged) ───
+(function hookAuth(){
+  const iv = setInterval(()=>{
+    if(!fbReady || !auth) return;
+    clearInterval(iv);
+    auth.onAuthStateChanged(async u => {
+      if(u){ await syncUserProfile(u); }
+      else{ isAdmin=false; isMaster=false; renderAdminLink(); }
+    });
+    listenNotifications();
+    loadSiteSettings();
+  }, 300);
+})();
+
+// ─── Wrap doDownload to log activity ───
+const _origDoDownload = window.doDownload;
+window.doDownload = async function(id, eUrl, eTitle){
+  await _origDoDownload(id, eUrl, eTitle);
+  logAct('download', decodeURIComponent(eTitle||''));
+};
+
+// ─── Wrap toggleFavorite to log ───
+if(typeof toggleFavorite === 'function'){
+  const _origFav = window.toggleFavorite;
+  window.toggleFavorite = async function(modelId){
+    await _origFav(modelId);
+    logAct('favorite_toggle', modelId);
+  };
+}
+
+// ─── Wrap submitRequest to attach userId + log ───
+const _origSubmitRequest = window.submitRequest;
+window.submitRequest = async function(){
+  const model = document.getElementById('rModel')?.value?.trim();
+  await _origSubmitRequest();
+  if(currentUser && fbReady && model){
+    try{
+      // Find the just-added doc (most recent matching) and patch userId
+      const snap = await db.collection(FS.requests)
+        .where('model','==',model).orderBy('createdAt','desc').limit(1).get();
+      if(!snap.empty){
+        await snap.docs[0].ref.update({
+          userId: currentUser.uid,
+          userEmail: currentUser.email||'',
+          userName: currentUser.displayName||snap.docs[0].data().userName||''
+        });
+      }
+    }catch(e){}
+  }
+  logAct('request_submit', model||'');
+};
 </script>
 </body>
 </html>
