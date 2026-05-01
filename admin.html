@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OXVIN SMARTO — Admin Panel</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tiro+Bangla&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -512,7 +514,7 @@ let db,auth,fbReady=false,currentAdmin=null,allBrands=[],allModels=[],allContent
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
       db=firebase.firestore();auth=firebase.auth();try{storage=firebase.storage()}catch(e){console.warn("Storage not enabled:",e.message)}
-      db.settings({experimentalForceLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
       fbReady=true;
       auth.onAuthStateChanged(function(user){user?checkAccess(user):showLogin()});
     }catch(e){console.error('[OXVIN Admin]',e.message)}
