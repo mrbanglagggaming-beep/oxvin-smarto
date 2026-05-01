@@ -75,7 +75,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .nav-btn:hover{color:var(--text);background:rgba(255,255,255,0.04)}
 .nav-btn.active{color:var(--cyan);background:var(--cyan3)}
 .nav-search{
-  flex:1;max-width:340px;margin-left:auto;
+  flex:1;max-width:340px;
   display:flex;align-items:center;gap:0;
   background:var(--card);border:1px solid var(--border2);border-radius:8px;overflow:hidden;
   transition:border-color .2s;
@@ -297,7 +297,78 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .content-item{flex-direction:column;align-items:flex-start}
   .dl-btn{width:100%;justify-content:center}
 }
+
+/* ─── Theme tokens (light overrides) ─── */
+html[data-theme="light"]{
+  --bg:#f4f7fb;--bg2:#ffffff;--bg3:#eef2f7;
+  --card:#ffffff;--card2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#475569;--dim:#94a3b8;
+}
+html[data-theme="light"] body::before{opacity:0.4}
+/* Hide BN/EN labels via attr */
+html[data-lang="en"] [data-bn]{display:none}
+html[data-lang="bn"] [data-en]{display:none}
+.theme-toggle,.lang-toggle{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  padding:5px 10px;border-radius:7px;cursor:pointer;font-size:0.78rem;
+  font-family:var(--font-m,monospace);transition:all .18s;
+}
+.theme-toggle:hover,.lang-toggle:hover{color:var(--cyan,#00e5ff);border-color:rgba(0,229,255,0.35)}
+
+/* ─── Login modal / star rating / preview ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);z-index:5000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:24px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+.modal h3{font-family:var(--font-display);font-size:1.2rem;letter-spacing:1px;margin-bottom:14px;color:var(--cyan)}
+.modal .fg input{width:100%;padding:10px 13px;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--font-body);font-size:0.88rem;outline:none;margin-bottom:10px}
+.modal-foot{display:flex;gap:8px;margin-top:14px}
+.btn-x{padding:9px 16px;border-radius:7px;border:none;cursor:pointer;font-family:var(--font-body);font-size:0.86rem;flex:1}
+.btn-x.cyan{background:var(--cyan);color:#06080f}
+.btn-x.ghost{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border2)}
+.btn-x.google{background:#fff;color:#222;display:flex;align-items:center;justify-content:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;background:var(--card);border:1px solid var(--border2);font-size:0.8rem;cursor:pointer}
+.user-chip:hover{border-color:rgba(0,229,255,0.35)}
+.fav-btn{position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:1.1rem;transition:color .2s;z-index:2}
+.fav-btn:hover,.fav-btn.on{color:var(--red)}
+.stars{display:inline-flex;gap:2px}
+.star{cursor:pointer;color:var(--dim);font-size:1.05rem;transition:color .15s}
+.star.on,.star:hover,.star:hover ~ .star{color:var(--amber)}
+.review-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.83rem}
+.review-item .ru{font-weight:600;color:var(--cyan);font-size:0.8rem}
+.review-item .rd{color:var(--dim);font-size:0.7rem;font-family:var(--font-mono)}
+.preview-iframe{width:100%;height:60vh;border:none;background:#fff;border-radius:8px}
+.zoom-img{max-width:100%;cursor:zoom-in;border-radius:8px}
+@media print{.nav,.brand-bar,.breadcrumb,.stats-bar,.footer,.toast-wrap,.fav-btn,.dl-btn,#contentTabs,.empty-btn{display:none!important}.page{display:block!important}.content-item{break-inside:avoid;border:1px solid #ccc!important;background:#fff!important;color:#000!important}}
+
 </style>
+
+<!-- SEO -->
+<meta name="keywords" content="মোবাইল রিপেয়ার, schematic, testpoint, firmware, OXVIN SMARTO, mobile servicing Bangladesh">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="OXVIN SMARTO — মোবাইল রিপেয়ার ডেটাবেস">
+<meta property="og:description" content="বাংলাদেশের সেরা মোবাইল সার্ভিসিং ডেটাবেস">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://oxvin-smarto.web.app/">
+<!-- Firebase Storage -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<!-- Chart.js (admin uses; tiny enough to share) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Google Analytics 4 (replace G-XXXXXX with your real ID) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JZWM2R8QYZ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-JZWM2R8QYZ');</script>
+<!-- Theme + Language pre-init (no flash) -->
+<script>
+(function(){
+  try{
+    var t=localStorage.getItem('oxvin_theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    var l=localStorage.getItem('oxvin_lang')||'bn';
+    document.documentElement.setAttribute('data-lang',l);
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body>
 
@@ -315,7 +386,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <button class="nav-btn" data-page="requests">রিকোয়েস্ট</button>
     <button class="nav-btn" data-page="guide">গাইড</button>
   </div>
-  <div class="nav-search">
+  <button id="langBtn" class="lang-toggle" onclick="toggleLang()" style="margin-left:auto">EN</button>
+  <button id="themeBtn" class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
+  <button class="nav-btn" data-page="favorites"><i class="fas fa-heart"></i> ফেভারিট</button>
+  <div id="userArea"></div>
+  <div class="nav-search" style="margin-left:0">
     <input type="text" id="searchInput" placeholder="মডেল খুঁজুন... S23, Redmi Note 13">
     <button onclick="doSearch()"><i class="fas fa-search"></i></button>
   </div>
@@ -409,6 +484,49 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <span style="margin-top:4px;display:block">সব রিসোর্স ফ্রি · টেকনিশিয়ানদের জন্য উন্মুক্ত · © 2026</span>
 </footer>
 
+
+<!-- FAVORITES PAGE -->
+<div id="favoritesPage" class="page">
+  <div class="sec-head"><h2>❤️ আপনার ফেভারিট মডেল</h2><span id="favCount"></span></div>
+  <div id="favGrid" class="models-grid"></div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-bg" id="loginModal">
+  <div class="modal">
+    <h3>🔐 লগইন / সাইন আপ</h3>
+    <button class="btn-x google" onclick="loginGoogle()" style="width:100%;margin-bottom:12px">
+      <i class="fab fa-google"></i> Google দিয়ে লগইন
+    </button>
+    <div style="text-align:center;color:var(--dim);font-size:0.78rem;margin:8px 0">— অথবা —</div>
+    <div class="fg"><input type="email" id="liEmail" placeholder="ইমেইল"></div>
+    <div class="fg"><input type="password" id="liPass" placeholder="পাসওয়ার্ড (৬+ অক্ষর)"></div>
+    <div id="liErr" style="color:var(--red);font-size:0.78rem;min-height:18px"></div>
+    <div class="modal-foot">
+      <button class="btn-x ghost" onclick="closeLogin()">বাতিল</button>
+      <button class="btn-x cyan" onclick="loginEmail(false)">লগইন</button>
+      <button class="btn-x cyan" onclick="loginEmail(true)" style="background:var(--green)">সাইন আপ</button>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-bg" id="previewModal">
+  <div class="modal" style="max-width:760px">
+    <h3 id="prevTitle">প্রিভিউ</h3>
+    <div id="prevBody" style="min-height:200px"></div>
+    <div class="modal-foot">
+      <button class="btn-x ghost" onclick="closePreview()">বন্ধ</button>
+      <button class="btn-x cyan" id="prevDownload">ডাউনলোড</button>
+    </div>
+  </div>
+</div>
+
+<!-- ZOOM MODAL -->
+<div class="modal-bg" id="zoomModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <img id="zoomImg" src="" style="max-width:95vw;max-height:92vh;border-radius:10px;cursor:zoom-out">
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -424,7 +542,8 @@ const FC = {
   appId:"1:607560575581:web:abf88c2b09d6ee56ddfbb4",
   measurementId:"G-JZWM2R8QYZ"
 };
-const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests'};
+const FS={brands:'oxvin_brands',models:'oxvin_models',contents:'oxvin_contents',requests:'oxvin_requests',reviews:'oxvin_reviews',favorites:'oxvin_favorites'};
+let auth=null,currentUser=null;
 
 let db,fbReady=false;
 (function initFB(){
@@ -433,8 +552,8 @@ let db,fbReady=false;
     clearInterval(iv);
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
-      db=firebase.firestore();
-      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db=firebase.firestore();try{auth=firebase.auth();auth.onAuthStateChanged(u=>{currentUser=u;renderUserArea();if(u){loadFavorites()}});}catch(e){}
+      db.settings({experimentalForceLongPolling:true,ignoreUndefinedProperties:true,merge:true});
       fbReady=true;
       console.log('[OXVIN] Firebase ready ✅');
       onReady();
@@ -709,6 +828,267 @@ try{
     }
   };
 }catch(e){}
+
+
+
+// ══════════════════════════════════════════
+// THEME + LANG
+// ══════════════════════════════════════════
+
+window.toggleTheme=function(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var nxt=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',nxt);
+  try{localStorage.setItem('oxvin_theme',nxt)}catch(e){}
+  var b=document.getElementById('themeBtn');if(b)b.textContent=nxt==='dark'?'☀️ Light':'🌙 Dark';
+};
+window.toggleLang=function(){
+  var cur=document.documentElement.getAttribute('data-lang')||'bn';
+  var nxt=cur==='bn'?'en':'bn';
+  document.documentElement.setAttribute('data-lang',nxt);
+  try{localStorage.setItem('oxvin_lang',nxt)}catch(e){}
+  var b=document.getElementById('langBtn');if(b)b.textContent=nxt==='bn'?'EN':'বাং';
+};
+document.addEventListener('DOMContentLoaded',function(){
+  var t=document.getElementById('themeBtn');
+  if(t)t.textContent=(document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'☀️ Light':'🌙 Dark';
+  var l=document.getElementById('langBtn');
+  if(l)l.textContent=(document.documentElement.getAttribute('data-lang')||'bn')==='bn'?'EN':'বাং';
+});
+
+
+// ══════════════════════════════════════════
+// AUTH (Firebase)
+// ══════════════════════════════════════════
+let userFavs=new Set();
+
+function renderUserArea(){
+  var el=document.getElementById('userArea');if(!el)return;
+  if(currentUser){
+    var n=currentUser.displayName||currentUser.email.split('@')[0];
+    el.innerHTML='<div class="user-chip" onclick="logoutUser()" title="লগআউট">'+
+      (currentUser.photoURL?'<img src="'+currentUser.photoURL+'" style="width:22px;height:22px;border-radius:50%">':'<i class="fas fa-user-circle"></i>')+
+      '<span>'+n+'</span></div>';
+  }else{
+    el.innerHTML='<button class="nav-btn" onclick="openLogin()"><i class="fas fa-sign-in-alt"></i> লগইন</button>';
+  }
+}
+function openLogin(){document.getElementById('loginModal').classList.add('show')}
+function closeLogin(){document.getElementById('loginModal').classList.remove('show');document.getElementById('liErr').textContent=''}
+async function loginEmail(isSignup){
+  var e=document.getElementById('liEmail').value.trim();
+  var p=document.getElementById('liPass').value;
+  var err=document.getElementById('liErr');err.textContent='';
+  if(!e||!p){err.textContent='ইমেইল ও পাসওয়ার্ড দিন';return}
+  if(!auth){err.textContent='Firebase লোড হচ্ছে...';return}
+  try{
+    if(isSignup)await auth.createUserWithEmailAndPassword(e,p);
+    else await auth.signInWithEmailAndPassword(e,p);
+    closeLogin();toast('স্বাগতম!','ok');
+  }catch(ex){err.textContent=ex.message}
+}
+async function loginGoogle(){
+  if(!auth){toast('Firebase লোড হচ্ছে','err');return}
+  try{
+    var prov=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(prov);
+    closeLogin();toast('স্বাগতম!','ok');
+  }catch(e){document.getElementById('liErr').textContent=e.message}
+}
+async function logoutUser(){if(confirm('লগআউট করবেন?')){await auth.signOut();userFavs=new Set();toast('বিদায়!','info')}}
+
+// ══════════════════════════════════════════
+// FAVORITES
+// ══════════════════════════════════════════
+async function loadFavorites(){
+  if(!currentUser||!fbReady)return;
+  try{
+    var snap=await db.collection(FS.favorites).where('uid','==',currentUser.uid).get();
+    userFavs=new Set(snap.docs.map(d=>d.data().modelId));
+    document.querySelectorAll('.fav-btn').forEach(b=>{var mid=b.dataset.mid;if(userFavs.has(mid))b.classList.add('on');else b.classList.remove('on')});
+  }catch(e){}
+}
+async function toggleFav(modelId,evt){
+  if(evt){evt.stopPropagation();evt.preventDefault()}
+  if(!currentUser){openLogin();return}
+  try{
+    var docId=currentUser.uid+'_'+modelId;
+    if(userFavs.has(modelId)){
+      await db.collection(FS.favorites).doc(docId).delete();
+      userFavs.delete(modelId);toast('ফেভারিট থেকে সরানো হয়েছে','info');
+    }else{
+      await db.collection(FS.favorites).doc(docId).set({uid:currentUser.uid,modelId,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      userFavs.add(modelId);toast('ফেভারিটে যোগ হয়েছে','ok');
+    }
+    document.querySelectorAll('.fav-btn[data-mid="'+modelId+'"]').forEach(b=>b.classList.toggle('on',userFavs.has(modelId)));
+  }catch(e){toast('সমস্যা: '+e.message,'err')}
+}
+async function showFavorites(){
+  showPage('favorites');
+  var grid=document.getElementById('favGrid');
+  var cnt=document.getElementById('favCount');
+  if(!currentUser){grid.innerHTML='<div style="grid-column:1/-1"><div class="empty"><i class="fas fa-heart"></i><h3>প্রথমে লগইন করুন</h3><button class="empty-btn" onclick="openLogin()">লগইন</button></div></div>';cnt.textContent='';return}
+  await loadFavorites();
+  if(!userFavs.size){grid.innerHTML='<div style="grid-column:1/-1"><div class="empty"><i class="far fa-heart"></i><h3>কোনো ফেভারিট নেই</h3><p>মডেল পাতায় ❤️ আইকনে ক্লিক করে যোগ করুন</p></div></div>';cnt.textContent='0';return}
+  var ids=[...userFavs];var allM=[];
+  // chunk in 10s for 'in' query
+  for(var i=0;i<ids.length;i+=10){
+    var chunk=ids.slice(i,i+10);
+    try{var snap=await db.collection(FS.models).where(firebase.firestore.FieldPath.documentId(),'in',chunk).get();allM=allM.concat(snap.docs.map(d=>({id:d.id,...d.data()})))}catch(e){}
+  }
+  cnt.textContent=allM.length+' টি মডেল';
+  grid.innerHTML=allM.map(m=>`<div class="model-card" style="position:relative" onclick="selectModel('${m.id}')">
+    <button class="fav-btn on" data-mid="${m.id}" onclick="toggleFav('${m.id}',event)">❤️</button>
+    <div class="mc-name">${m.name}</div>
+    <div class="mc-specs">${m.specs||''}</div>
+  </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// PATCH renderModels to add fav buttons
+// ══════════════════════════════════════════
+var _origRenderModels=window.renderModels;
+window.renderModels=function(data){
+  _origRenderModels(data);
+  if(Array.isArray(data)){
+    var g=document.getElementById('modelsGrid');
+    g.querySelectorAll('.model-card').forEach((card,i)=>{
+      var m=data[i];if(!m)return;
+      card.style.position='relative';
+      var b=document.createElement('button');
+      b.className='fav-btn'+(userFavs.has(m.id)?' on':'');
+      b.dataset.mid=m.id;b.innerHTML=userFavs.has(m.id)?'❤️':'🤍';
+      b.onclick=function(e){toggleFav(m.id,e);b.innerHTML=userFavs.has(m.id)?'❤️':'🤍'};
+      card.appendChild(b);
+    });
+  }
+};
+
+// ══════════════════════════════════════════
+// PATCH renderTab to add preview + rating
+// ══════════════════════════════════════════
+var _origRenderTab=window.renderTab;
+window.renderTab=function(type){
+  _origRenderTab(type);
+  var area=document.getElementById('contentList');
+  area.querySelectorAll('.content-item').forEach(item=>{
+    var dl=item.querySelector('.dl-btn');if(!dl||item._enhanced)return;item._enhanced=true;
+    // Extract content id from onclick
+    var oc=dl.getAttribute('onclick')||'';var m=oc.match(/'([^']+)'/);var cid=m?m[1]:null;
+    if(!cid)return;var content=contents.find(c=>c.id===cid);if(!content)return;
+    // Add preview button
+    var pb=document.createElement('button');
+    pb.className='btn-x ghost';pb.style.cssText='padding:7px 12px;font-size:0.78rem;margin-right:6px';
+    pb.innerHTML='<i class="fas fa-eye"></i> প্রিভিউ';
+    pb.onclick=function(e){e.stopPropagation();openPreview(content)};
+    dl.parentNode.insertBefore(pb,dl);
+    // Add rating row
+    var rateRow=document.createElement('div');
+    rateRow.style.cssText='margin-top:8px;display:flex;align-items:center;gap:10px;font-size:0.78rem;color:var(--muted);flex-wrap:wrap';
+    rateRow.innerHTML='<div class="stars" data-cid="'+cid+'">'+[1,2,3,4,5].map(n=>'<span class="star" data-n="'+n+'">★</span>').join('')+'</div><span style="cursor:pointer;color:var(--cyan)" onclick="showReviews(\''+cid+'\')"><i class="fas fa-comments"></i> রিভিউ</span>';
+    item.querySelector('.ci-body').appendChild(rateRow);
+    // Bind stars
+    rateRow.querySelectorAll('.star').forEach(s=>{
+      s.onclick=function(){submitRating(cid,parseInt(this.dataset.n))};
+    });
+    loadAvgRating(cid,rateRow);
+  });
+};
+async function loadAvgRating(cid,row){
+  try{
+    var snap=await db.collection(FS.reviews).where('contentId','==',cid).get();
+    if(snap.empty)return;
+    var avg=snap.docs.reduce((s,d)=>s+(d.data().rating||0),0)/snap.size;
+    var stars=row.querySelectorAll('.star');
+    stars.forEach((s,i)=>{if(i<Math.round(avg))s.classList.add('on')});
+    var info=document.createElement('span');info.style.cssText='font-family:var(--font-mono);font-size:0.72rem';
+    info.textContent=avg.toFixed(1)+' ★ ('+snap.size+')';row.appendChild(info);
+  }catch(e){}
+}
+async function submitRating(cid,n){
+  if(!currentUser){openLogin();return}
+  var comment=prompt('আপনার রিভিউ লিখুন (ঐচ্ছিক):','');
+  try{
+    await db.collection(FS.reviews).doc(currentUser.uid+'_'+cid).set({
+      contentId:cid,rating:n,comment:comment||'',
+      uid:currentUser.uid,name:currentUser.displayName||currentUser.email.split('@')[0],
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast(n+' স্টার রেটিং দিয়েছেন!','ok');
+  }catch(e){toast('সমস্যা: '+e.message,'err')}
+}
+async function showReviews(cid){
+  var body='<div style="max-height:50vh;overflow-y:auto" id="rvList"><div style="color:var(--muted);font-size:0.83rem">লোড হচ্ছে...</div></div>';
+  document.getElementById('prevTitle').textContent='💬 রিভিউসমূহ';
+  document.getElementById('prevBody').innerHTML=body;
+  document.getElementById('prevDownload').style.display='none';
+  document.getElementById('previewModal').classList.add('show');
+  try{
+    var snap=await db.collection(FS.reviews).where('contentId','==',cid).get();
+    var list=document.getElementById('rvList');
+    if(snap.empty){list.innerHTML='<p style="color:var(--muted);font-size:0.83rem">এখনো কোনো রিভিউ নেই</p>';return}
+    list.innerHTML=snap.docs.map(d=>{var r=d.data();return'<div class="review-item"><div style="display:flex;justify-content:space-between;align-items:center"><span class="ru">'+(r.name||'Anonymous')+'</span><span style="color:var(--amber)">'+'★'.repeat(r.rating)+'</span></div>'+(r.comment?'<div style="margin-top:4px">'+r.comment+'</div>':'')+'</div>'}).join('');
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// PREVIEW + IMAGE ZOOM + PRINT
+// ══════════════════════════════════════════
+function openPreview(c){
+  document.getElementById('prevTitle').textContent=c.title;
+  var url=c.fileUrl||'';var lower=url.toLowerCase();
+  var body='';
+  if(/\.(png|jpg|jpeg|webp|gif)(\?|$)/.test(lower)){
+    body='<img src="'+url+'" class="zoom-img" onclick="openZoom(this.src)" style="max-width:100%;border-radius:8px">';
+  }else if(/\.pdf(\?|$)/.test(lower)){
+    body='<iframe class="preview-iframe" src="'+url+'"></iframe>';
+  }else if(url.includes('drive.google.com')){
+    var m=url.match(/[-\w]{25,}/);
+    body=m?'<iframe class="preview-iframe" src="https://drive.google.com/file/d/'+m[0]+'/preview"></iframe>'
+         :'<p style="color:var(--muted)">প্রিভিউ পাওয়া যায়নি — ডাউনলোড করুন</p>';
+  }else{
+    body='<p style="color:var(--muted);font-size:0.85rem">এই ফাইলের ডাইরেক্ট প্রিভিউ নেই। ডাউনলোড করুন।</p><div style="margin-top:10px;padding:10px;background:var(--bg2);border-radius:7px;font-family:var(--font-mono);font-size:0.78rem;word-break:break-all">'+url+'</div>';
+  }
+  document.getElementById('prevBody').innerHTML=body;
+  var dl=document.getElementById('prevDownload');dl.style.display='';
+  dl.onclick=function(){doDownload(c.id,encodeURIComponent(url),encodeURIComponent(c.title));closePreview()};
+  document.getElementById('previewModal').classList.add('show');
+}
+function closePreview(){document.getElementById('previewModal').classList.remove('show')}
+function openZoom(src){document.getElementById('zoomImg').src=src;document.getElementById('zoomModal').classList.add('show')}
+document.getElementById('previewModal').addEventListener('click',function(e){if(e.target===this)closePreview()});
+
+// ══════════════════════════════════════════
+// PRINT GUIDE button
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',function(){
+  var gp=document.getElementById('guidePage');
+  if(gp){
+    var bar=document.createElement('div');bar.style.cssText='padding:0 24px 14px';
+    bar.innerHTML='<button class="empty-btn" onclick="window.print()"><i class="fas fa-print"></i> গাইড প্রিন্ট / PDF</button>';
+    gp.insertBefore(bar,gp.children[1]||null);
+  }
+  renderUserArea();
+});
+
+// ══════════════════════════════════════════
+// EXTEND showPage to handle 'favorites'
+// ══════════════════════════════════════════
+var _origShowPage=window.showPage;
+window.showPage=function(p){
+  if(p==='favorites'){
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    document.getElementById('favoritesPage').classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+    document.getElementById('brandBar').style.display='none';
+    document.getElementById('statsBar').style.display='none';
+    showFavorites();return;
+  }
+  _origShowPage(p);
+};
+
+// nav-btn click for favorites
+document.querySelectorAll('.nav-btn[data-page="favorites"]').forEach(b=>b.addEventListener('click',()=>showPage('favorites')));
 
 // ══════════════════════════════════════════
 // TOAST
