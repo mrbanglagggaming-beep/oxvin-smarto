@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OXVIN SMARTO — Admin Panel</title>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer-when-downgrade">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Tiro+Bangla&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -167,6 +168,30 @@ html[data-lang="bn"] [data-en]{display:none}
 }
 .theme-toggle:hover,.lang-toggle:hover{color:var(--cyan,#00e5ff);border-color:rgba(0,229,255,0.35)}
 
+
+/* ── Added by upgrade pack ── */
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-family:var(--font-m,monospace);white-space:nowrap;z-index:9999;pointer-events:none}
+.skeleton{background:linear-gradient(90deg,var(--card,#101522) 0%,var(--card2,#141a28) 50%,var(--card,#101522) 100%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#scrollTopBtn{position:fixed;bottom:24px;right:24px;width:46px;height:46px;border-radius:50%;background:var(--cyan,#00e5ff);color:#000;border:none;font-size:20px;cursor:pointer;display:none;z-index:999;box-shadow:0 6px 20px rgba(0,229,255,.3);transition:transform .2s}
+#scrollTopBtn:hover{transform:translateY(-3px)}
+.confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:99999;animation:fadeIn .2s}
+.confirm-modal{background:var(--card,#101522);border:1px solid var(--border2,#1e2840);border-radius:14px;padding:24px;max-width:380px;width:90%;text-align:center}
+.confirm-modal h3{font-family:var(--font-d,sans-serif);font-size:1.3rem;letter-spacing:2px;color:var(--cyan,#00e5ff);margin-bottom:10px}
+.confirm-modal p{color:var(--text,#e2eeff);margin-bottom:20px;font-size:.95rem}
+.confirm-modal .row{display:flex;gap:10px;justify-content:center}
+.confirm-modal button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font-m,monospace);font-size:.85rem;letter-spacing:1px}
+.confirm-modal .ok{background:var(--red,#f43f5e);color:#fff}
+.confirm-modal .no{background:var(--card2,#141a28);color:var(--text,#e2eeff);border:1px solid var(--border2,#1e2840)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+html[data-theme="light"] .ci-icon,html[data-theme="light"] img.ci-icon{filter:brightness(.95)}
+html[data-theme="dark"] .ci-icon,html[data-theme="dark"] img.ci-icon{filter:brightness(1.1)}
+img[loading]{transition:opacity .3s}
+.bulk-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--cyan3,rgba(0,229,255,.08));border:1px solid rgba(0,229,255,.2);border-radius:8px;margin-bottom:10px;font-size:.85rem;font-family:var(--font-m,monospace)}
+.bulk-bar .count{color:var(--cyan,#00e5ff);font-weight:700}
+.bulk-bar button{padding:6px 14px;border:none;border-radius:6px;background:var(--red,#f43f5e);color:#fff;cursor:pointer;font-size:.8rem;font-family:var(--font-m,monospace)}
+.bulk-bar button:disabled{opacity:.4;cursor:not-allowed}
 </style>
 
 <!-- SEO -->
@@ -378,10 +403,19 @@ CSV: name,specs,brandId,order</pre>
   <div class="card">
     <div class="card-title"><i class="fas fa-list"></i> সব মডেল</div>
     <div class="fr" style="margin-bottom:12px">
-      <select id="mFilter" onchange="loadModelsTable(this.value)" style="max-width:180px"><option value="">সব ব্র্যান্ড</option></select>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+<input id="adminSearch" placeholder="🔍 মডেল/স্পেস সার্চ..." oninput="adminSearch()" style="flex:1;min-width:200px;padding:9px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-m);font-size:.85rem">
+<button class="btn btn-cyan" onclick="exportModelsCSV()" data-tooltip="CSV এক্সপোর্ট"><i class="fas fa-file-csv"></i> CSV</button>
+<button class="btn btn-cyan" onclick="generateReport()" data-tooltip="PDF রিপোর্ট"><i class="fas fa-print"></i> রিপোর্ট</button>
+</div>
+<div class="bulk-bar" id="bulkBar" style="display:none">
+<span class="count" id="selectedCount">০টি সিলেক্টেড</span>
+<button onclick="bulkDeleteModels()"><i class="fas fa-trash"></i> সিলেক্টেড মুছুন</button>
+<button onclick="clearSelection()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text)">ক্লিয়ার</button>
+</div>
+<select id="mFilter" onchange="loadModelsTable(this.value)" style="max-width:180px"><option value="">সব ব্র্যান্ড</option></select>
     </div>
-    <div class="tw"><table id="modelsTable">
-      <thead><tr><th>মডেল</th><th>স্পেসিফিকেশন</th><th>ব্র্যান্ড</th><th>অ্যাকশন</th></tr></thead>
+    <div class="tw"><table id="modelsTable"><thead><tr><th style="width:30px"><input type="checkbox" onchange="document.querySelectorAll('.model-chk').forEach(c=>{c.checked=this.checked;toggleSelectModel(c.dataset.id)})"></th><th>মডেল</th><th>স্পেসিফিকেশন</th><th>ব্র্যান্ড</th><th>অ্যাকশন</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </div>
@@ -514,7 +548,7 @@ let db,auth,fbReady=false,currentAdmin=null,allBrands=[],allModels=[],allContent
     try{
       var app=firebase.apps.length?firebase.app():firebase.initializeApp(FC);
       db=firebase.firestore();auth=firebase.auth();try{storage=firebase.storage()}catch(e){console.warn("Storage not enabled:",e.message)}
-      db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true,merge:true});
+      db.settings({ignoreUndefinedProperties:true});
       fbReady=true;
       auth.onAuthStateChanged(function(user){user?checkAccess(user):showLogin()});
     }catch(e){console.error('[OXVIN Admin]',e.message)}
@@ -1101,6 +1135,248 @@ function toast(msg,type='info'){
   w.appendChild(el);
   setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(14px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300)},4000);
 }
+
+
+// ═══════════════ UPGRADE PACK (admin) ═══════════════
+// FIX #6: Admin search across models
+async function adminSearch(){
+  var q=(document.getElementById('adminSearch').value||'').trim().toLowerCase();
+  var brand=document.getElementById('mFilter').value||'';
+  if(!q){return loadModelsTable(brand)}
+  try{
+    var snap=brand?await db.collection(FS.models).where('brandId','==',brand).get():await db.collection(FS.models).get();
+    var res=snap.docs.map(function(d){return Object.assign({id:d.id},d.data())})
+      .filter(function(m){return (m.name||'').toLowerCase().includes(q)||(m.specs||'').toLowerCase().includes(q)});
+    var tb=document.querySelector('#modelsTable tbody');
+    if(!tb)return;
+    if(!res.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">কিছু পাওয়া যায়নি</td></tr>';return}
+    tb.innerHTML=res.map(function(m){
+      return '<tr><td><input type="checkbox" class="model-chk" data-id="'+m.id+'" onchange="toggleSelectModel(\''+m.id+'\')"></td><td>'+(m.name||'—')+'</td><td>'+(m.specs||'—')+'</td><td>'+(m.brandId||'')+' <button class="btn btn-red btn-sm" onclick="deleteModel(\''+m.id+'\',\''+(m.name||'').replace(/'/g,"\\'")+'\')">🗑️</button></td></tr>';
+    }).join('');
+  }catch(e){console.error(e);toast('সার্চ ব্যর্থ','err')}
+}
+
+// FIX #8: Bulk select / delete
+window.selectedModels=window.selectedModels||new Set();
+function toggleSelectModel(id){
+  if(selectedModels.has(id))selectedModels.delete(id);else selectedModels.add(id);
+  var el=document.getElementById('selectedCount');
+  var bar=document.getElementById('bulkBar');
+  if(el)el.textContent=selectedModels.size+'টি সিলেক্টেড';
+  if(bar)bar.style.display=selectedModels.size?'flex':'none';
+}
+function clearSelection(){
+  selectedModels.clear();
+  document.querySelectorAll('.model-chk').forEach(function(c){c.checked=false});
+  var bar=document.getElementById('bulkBar');if(bar)bar.style.display='none';
+}
+async function bulkDeleteModels(){
+  if(!selectedModels.size){toast('কিছু সিলেক্ট করুন','err');return}
+  var ok=await showConfirmModal(selectedModels.size+'টি মডেল ডিলিট হবে। নিশ্চিত?','বাল্ক ডিলিট');
+  if(!ok)return;
+  var batch=db.batch();
+  selectedModels.forEach(function(id){batch.delete(db.collection(FS.models).doc(id))});
+  try{await batch.commit();toast(selectedModels.size+'টি মডেল মুছে গেছে','ok');selectedModels.clear();
+    var bar=document.getElementById('bulkBar');if(bar)bar.style.display='none';
+    await loadModelsTable(document.getElementById('mFilter').value);syncUser()}
+  catch(e){toast('বাল্ক ডিলিট ব্যর্থ','err')}
+}
+
+// FIX #10: Notification sound
+window._notifPrev=0;
+function playNotificationSound(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator();var g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='sine';o.frequency.value=880;
+    g.gain.setValueAtTime(0.0001,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2,ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.4);
+    o.start();o.stop(ctx.currentTime+0.4);
+  }catch(e){}
+}
+
+// FIX #14: PDF report (print-based)
+async function generateReport(){
+  try{
+    var snap=await db.collection(FS.contents).get();
+    var rows=snap.docs.map(function(d){return Object.assign({id:d.id},d.data())});
+    var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>OXVIN রিপোর্ট</title>'+
+      '<style>body{font-family:sans-serif;padding:30px;color:#222}h1{color:#00b8d4;border-bottom:2px solid #00e5ff;padding-bottom:8px}'+
+      'table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:10px;border:1px solid #ddd;text-align:left;font-size:13px}'+
+      'th{background:#0d1120;color:#00e5ff}.meta{color:#666;font-size:12px;margin:8px 0 20px}</style></head><body>'+
+      '<h1>OXVIN SMARTO — কন্টেন্ট রিপোর্ট</h1>'+
+      '<div class="meta">তৈরি: '+new Date().toLocaleString('bn-BD')+' • মোট: '+rows.length+'টি</div>'+
+      '<table><thead><tr><th>#</th><th>শিরোনাম</th><th>টাইপ</th><th>ডাউনলোড</th></tr></thead><tbody>'+
+      rows.map(function(r,i){return '<tr><td>'+(i+1)+'</td><td>'+(r.title||'—')+'</td><td>'+(r.type||'—')+'</td><td>'+(r.downloadCount||0)+'</td></tr>'}).join('')+
+      '</tbody></table>
+<button id="scrollTopBtn" data-tooltip="উপরে যান" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+// ── Scroll-to-top ──
+window.addEventListener('scroll',function(){
+  var b=document.getElementById('scrollTopBtn');
+  if(b)b.style.display=window.scrollY>300?'flex':'none';
+},{passive:true});
+
+// ── Custom confirm modal ──
+window.showConfirmModal=function(msg,title){
+  return new Promise(function(resolve){
+    var m=document.createElement('div');m.className='confirm-modal-bg';
+    m.innerHTML='<div class="confirm-modal"><h3>'+(title||'নিশ্চিত?')+'</h3><p>'+msg+'</p><div class="row"><button class="no">বাতিল</button><button class="ok">নিশ্চিত</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('.ok').onclick=function(){m.remove();resolve(true)};
+    m.querySelector('.no').onclick=function(){m.remove();resolve(false)};
+    m.addEventListener('click',function(e){if(e.target===m){m.remove();resolve(false)}});
+  });
+};
+
+// ── Rate limit helper ──
+window._lastReq=0;
+window.rateLimit=function(ms){
+  ms=ms||800;
+  if(Date.now()-window._lastReq<ms)return false;
+  window._lastReq=Date.now();return true;
+};
+
+// ── CSV export helper ──
+window.exportToCSV=function(rows,filename){
+  if(!rows||!rows.length)return;
+  var keys=Object.keys(rows[0]);
+  var csv=keys.join(',')+'\n'+rows.map(function(r){
+    return keys.map(function(k){
+      var v=r[k]==null?'':String(r[k]).replace(/"/g,'""');
+      return /[",\n]/.test(v)?'"'+v+'"':v;
+    }).join(',');
+  }).join('\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename||'export.csv';a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+};
+
+// ── Default theme: respect system preference ──
+(function(){
+  if(!localStorage.getItem('oxvin_theme')){
+    var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if(!prefersDark)document.documentElement.setAttribute('data-theme','light');
+  }
+})();
+</script>
+</body></html>';
+    var w=window.open('','_blank');w.document.write(html);w.document.close();
+    setTimeout(function(){w.print()},400);
+  }catch(e){toast('রিপোর্ট ব্যর্থ','err')}
+}
+
+// FIX #30: CSV export for models
+async function exportModelsCSV(){
+  try{
+    var snap=await db.collection(FS.models).get();
+    var rows=snap.docs.map(function(d){var x=d.data();return {id:d.id,name:x.name||'',specs:x.specs||'',brandId:x.brandId||''}});
+    if(!rows.length){toast('কোনো ডেটা নেই','err');return}
+    exportToCSV(rows,'oxvin_models_'+Date.now()+'.csv');
+    toast('CSV ডাউনলোড হয়েছে','ok');
+  }catch(e){toast('এক্সপোর্ট ব্যর্থ','err')}
+}
+
+// FIX #15: Image compression before upload
+async function compressImage(file,maxW,quality){
+  maxW=maxW||1280;quality=quality||0.75;
+  if(!file||!file.type||!file.type.startsWith('image/'))return file;
+  return new Promise(function(resolve){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW}
+        var c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        c.toBlob(function(blob){resolve(blob||file)},'image/jpeg',quality);
+      };
+      img.onerror=function(){resolve(file)};
+      img.src=e.target.result;
+    };
+    reader.onerror=function(){resolve(file)};
+    reader.readAsDataURL(file);
+  });
+}
+
+// FIX #31: Activity log
+async function logUserActivity(action,item){
+  try{
+    if(!auth||!auth.currentUser)return;
+    await db.collection('oxvin_logs').add({
+      uid:auth.currentUser.uid,email:auth.currentUser.email||'',
+      action:action,item:item||'',
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){}
+}
+
+// Hook: play sound when new request arrives
+(function(){
+  if(typeof loadReqBadge!=='function')return;
+  var _orig=loadReqBadge;
+  window.loadReqBadge=async function(){
+    try{
+      var snap=await db.collection(FS.requests).where('status','==','pending').get();
+      if(snap.size>window._notifPrev&&window._notifPrev>0)playNotificationSound();
+      window._notifPrev=snap.size;
+    }catch(e){}
+    return _orig.apply(this,arguments);
+  };
+})();
+
+// Hook: compress images automatically inside doImgUpload
+(function(){
+  if(typeof doImgUpload!=='function')return;
+  var _orig=doImgUpload;
+  window.doImgUpload=async function(){
+    var inp=document.getElementById('imgFile');
+    if(inp&&inp.files&&inp.files[0]){
+      try{
+        var compressed=await compressImage(inp.files[0]);
+        if(compressed&&compressed.size<inp.files[0].size){
+          var dt=new DataTransfer();
+          dt.items.add(new File([compressed],inp.files[0].name.replace(/\.\w+$/,'.jpg'),{type:'image/jpeg'}));
+          inp.files=dt.files;
+        }
+      }catch(e){}
+    }
+    return _orig.apply(this,arguments);
+  };
+})();
+
+// FIX #9: Better dashboard chart (only if Chart.js + canvas exist)
+(function(){
+  if(typeof renderDashChart!=='function')return;
+  window.renderDashChart=async function(){
+    try{
+      var el=document.getElementById('dashChart');if(!el||!window.Chart)return;
+      var snap=await db.collection(FS.contents).get();
+      var cnt={schematic:0,testpoint:0,firmware:0,code:0};
+      snap.docs.forEach(function(d){var t=d.data().type;if(cnt[t]!==undefined)cnt[t]++});
+      if(window._dashChart)window._dashChart.destroy();
+      window._dashChart=new Chart(el,{type:'bar',
+        data:{labels:['স্কিমেটিক্স','টেস্টপয়েন্ট','ফার্মওয়্যার','কোড'],
+          datasets:[{label:'কন্টেন্ট সংখ্যা',data:[cnt.schematic,cnt.testpoint,cnt.firmware,cnt.code],
+            backgroundColor:['#00e5ff','#f59e0b','#10b981','#8b5cf6'],borderRadius:6}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{position:'bottom',labels:{color:'#e2eeff'}}},
+          scales:{y:{ticks:{color:'#6b8aad'},grid:{color:'#1a2236'}},x:{ticks:{color:'#6b8aad'},grid:{display:false}}}}});
+    }catch(e){console.warn('dash chart',e)}
+  };
+})();
+
+// Log admin actions
+['addBrand','deleteBrand','addModel','deleteModel','addContent','saveEdit','delContent','updateReq','delReq','bulkDeleteModels'].forEach(function(fn){
+  if(typeof window[fn]==='function'){
+    var _o=window[fn];
+    window[fn]=async function(){var r=await _o.apply(this,arguments);logUserActivity(fn,Array.from(arguments).join(',').slice(0,80));return r}
+  }
+});
+
 </script>
 </body>
 </html>
